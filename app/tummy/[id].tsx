@@ -1,0 +1,268 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { Header } from '@/components/ui/Header';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { supabase } from '@/lib/auth/supabase';
+import { theme } from '@/constants/theme';
+import { formatTime, formatDuration } from '@/lib/utils/dateUtils';
+import { useQueryClient } from '@tanstack/react-query';
+
+export default function TummyTimeDetailScreen() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
+
+  const [log, setLog] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    loadTummyTime();
+  }, [id]);
+
+  async function loadTummyTime() {
+    if (!id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('tummy_time_logs')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setLog(data);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load tummy time details');
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteTummyTime() {
+    Alert.alert('Delete Tummy Time?', 'This cannot be undone.', [
+      { text: 'Cancel', onPress: () => {}, style: 'cancel' },
+      {
+        text: 'Delete',
+        onPress: async () => {
+          setDeleting(true);
+          try {
+            const { error } = await supabase
+              .from('tummy_time_logs')
+              .delete()
+              .eq('id', id);
+
+            if (error) throw error;
+
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['tummy'] });
+
+            Alert.alert('Deleted', 'Tummy time log removed', [
+              {
+                text: 'OK',
+                onPress: () => router.back(),
+              },
+            ]);
+          } catch (error) {
+            Alert.alert('Error', (error as any)?.message || 'Failed to delete');
+          } finally {
+            setDeleting(false);
+          }
+        },
+        style: 'destructive',
+      },
+    ]);
+  }
+
+  if (loading) {
+    return (
+      <ScreenContainer>
+        <Header title="Tummy Time Details" leftAction={() => router.back()} />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={theme.colors.teal} />
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  if (!log) {
+    return (
+      <ScreenContainer>
+        <Header title="Tummy Time Details" leftAction={() => router.back()} />
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Tummy time log not found</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+
+  const startTime = new Date(log.start_time);
+  const endTime = log.end_time ? new Date(log.end_time) : null;
+  const durationMs = endTime ? endTime.getTime() - startTime.getTime() : 0;
+  const durationSeconds = Math.floor(durationMs / 1000);
+
+  return (
+    <ScreenContainer scrollable>
+      <Header title="Tummy Time Details" leftAction={() => router.back()} />
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Activity Icon */}
+        <View style={styles.iconContainer}>
+          <MaterialCommunityIcons
+            name="baby-face-outline"
+            size={64}
+            color={theme.colors.peach}
+          />
+        </View>
+
+        {/* Start Time */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons
+              name="clock-start"
+              size={20}
+              color={theme.colors.teal}
+            />
+            <Text style={styles.sectionTitle}>Started</Text>
+          </View>
+          <Text style={styles.value}>{formatTime(startTime)}</Text>
+        </View>
+
+        {/* End Time */}
+        {endTime && (
+          <>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons
+                  name="clock-end"
+                  size={20}
+                  color={theme.colors.teal}
+                />
+                <Text style={styles.sectionTitle}>Ended</Text>
+              </View>
+              <Text style={styles.value}>{formatTime(endTime)}</Text>
+            </View>
+
+            {/* Duration */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons
+                  name="hourglass-end"
+                  size={20}
+                  color={theme.colors.teal}
+                />
+                <Text style={styles.sectionTitle}>Duration</Text>
+              </View>
+              <Text style={styles.largeValue}>{formatDuration(durationSeconds)}</Text>
+            </View>
+          </>
+        )}
+
+        {/* Ongoing */}
+        {!endTime && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons
+                name="timer"
+                size={20}
+                color={theme.colors.peach}
+              />
+              <Text style={styles.sectionTitle}>Status</Text>
+            </View>
+            <Text style={styles.value}>Currently having tummy time...</Text>
+          </View>
+        )}
+
+        {/* Notes */}
+        {log.notes && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons
+                name="note-outline"
+                size={20}
+                color={theme.colors.teal}
+              />
+              <Text style={styles.sectionTitle}>Notes</Text>
+            </View>
+            <Text style={styles.value}>{log.notes}</Text>
+          </View>
+        )}
+
+        {/* Delete Button */}
+        <PrimaryButton
+          title={deleting ? 'Deleting...' : 'Delete Tummy Time'}
+          onPress={deleteTummyTime}
+          variant="danger"
+          loading={deleting}
+          disabled={deleting}
+          style={styles.deleteButton}
+        />
+      </ScrollView>
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.lg,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    marginVertical: theme.spacing.xl,
+  },
+  section: {
+    marginBottom: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.input,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  sectionTitle: {
+    fontSize: theme.typography.label.fontSize,
+    fontWeight: theme.typography.label.fontWeight,
+    color: theme.colors.text,
+    marginLeft: theme.spacing.md,
+  },
+  value: {
+    fontSize: theme.typography.cardHeadline.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.text,
+  },
+  largeValue: {
+    fontSize: theme.typography.largeStats.fontSize,
+    fontWeight: theme.typography.largeStats.fontWeight,
+    color: theme.colors.teal,
+  },
+  deleteButton: {
+    marginBottom: theme.spacing.xl,
+  },
+  errorText: {
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.error,
+  },
+});
