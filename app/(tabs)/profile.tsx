@@ -31,13 +31,13 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings/baby')}>
             <MaterialCommunityIcons name="baby-face" size={24} color={theme.colors.teal} />
             <Text style={styles.menuLabel}>Baby Profile</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/caregivers')}>
             <MaterialCommunityIcons name="account-multiple" size={24} color={theme.colors.teal} />
             <Text style={styles.menuLabel}>Caregivers</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
