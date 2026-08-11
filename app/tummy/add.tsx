@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator,
   TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
@@ -20,36 +18,81 @@ import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
-import { formatTime, formatDuration } from '@/lib/utils/dateUtils';
+import { formatTime, formatDate, formatStopwatch, isToday } from '@/lib/utils/dateUtils';
 import { useStore } from '@/stores/useStore';
+
+const AMBER = theme.colors.yellowAccent;
+const AMBER_LIGHT = theme.colors.yellow;
+const AMBER_PALE = '#FBEACA';
 
 export default function AddTummyTimeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { activeTimer, setActiveTimer } = useStore();
+  const scrollRef = useRef<ScrollView>(null);
+  const manualSectionY = useRef(0);
 
-  const [mode, setMode] = useState<'start' | 'manual'>('start');
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'live' | 'manual'>('live');
+  const [now, setNow] = useState(Date.now());
+  const [startLoading, setStartLoading] = useState(false);
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const [finishLoading, setFinishLoading] = useState(false);
+  const [manualLoading, setManualLoading] = useState(false);
+
   const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-  const [startTime, setStartTime] = useState(new Date());
-  const [endTime, setEndTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [manualStart, setManualStart] = useState(new Date());
+  const [manualDate, setManualDate] = useState(new Date());
+  const [durationMinutes, setDurationMinutes] = useState('');
   const [notes, setNotes] = useState('');
 
-  useEffect(() => {
-    if (activeTimer?.type === 'tummy') {
-      setMode('manual');
-    }
-  }, [activeTimer]);
+  const { data: currentTummy } = useQuery({
+    queryKey: ['currentTummy', baby?.id],
+    queryFn: async () => {
+      if (!baby) return null;
+      const { data, error } = await supabase
+        .from('tummy_time_logs')
+        .select('*')
+        .eq('baby_id', baby.id)
+        .is('end_time', null)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!baby,
+    refetchInterval: 30000,
+  });
 
-  async function handleStartTummy() {
+  const isRunning = !!currentTummy;
+  const isPaused = isRunning && activeTimer?.type === 'tummy' && !!activeTimer.metadata?.paused;
+  const pausedAt = isPaused ? (activeTimer!.metadata!.pausedAt as number) : null;
+
+  useEffect(() => {
+    if (!isRunning || isPaused) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [isRunning, isPaused, currentTummy?.id]);
+
+  const elapsedSeconds = isRunning
+    ? Math.floor(((isPaused ? pausedAt! : now) - new Date(currentTummy.start_time).getTime()) / 1000)
+    : 0;
+
+  function invalidateTummyQueries() {
+    queryClient.invalidateQueries({ queryKey: ['currentTummy', baby?.id] });
+    queryClient.invalidateQueries({ queryKey: ['tummy_logs'] });
+    queryClient.invalidateQueries({ queryKey: ['history'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+  }
+
+  async function handleStart() {
     if (!baby) {
       Alert.alert('Error', 'No baby selected');
       return;
     }
 
-    setLoading(true);
+    setStartLoading(true);
     try {
       const {
         data: { user },
@@ -60,11 +103,11 @@ export default function AddTummyTimeScreen() {
         return;
       }
 
-      const now = new Date();
+      const start = new Date();
       const { error } = await supabase.from('tummy_time_logs').insert({
         baby_id: baby.id,
         created_by: user.id,
-        start_time: now.toISOString(),
+        start_time: start.toISOString(),
         end_time: null,
       });
 
@@ -72,20 +115,85 @@ export default function AddTummyTimeScreen() {
 
       setActiveTimer({
         type: 'tummy',
-        startedAt: now.getTime(),
+        startedAt: start.getTime(),
         babyId: baby.id,
+        metadata: { paused: false },
       });
 
-      Alert.alert('Tummy Time Started', 'Baby is having tummy time!', [
-        {
-          text: 'Done',
-          onPress: () => safeBack(router, '/(tabs)'),
-        },
-      ]);
+      setNow(Date.now());
+      invalidateTummyQueries();
     } catch (error) {
       Alert.alert('Error', (error as any)?.message || 'Failed to start tummy time');
     } finally {
-      setLoading(false);
+      setStartLoading(false);
+    }
+  }
+
+  function handlePause() {
+    if (!currentTummy || !baby) return;
+    // activeTimer may be unset on this device if a different caregiver
+    // started the session — fall back to the shared DB row's start_time.
+    const base =
+      activeTimer?.type === 'tummy'
+        ? activeTimer
+        : { type: 'tummy' as const, startedAt: new Date(currentTummy.start_time).getTime(), babyId: baby.id };
+    setPauseLoading(true);
+    setActiveTimer({
+      ...base,
+      metadata: { ...base.metadata, paused: true, pausedAt: Date.now() },
+    });
+    setPauseLoading(false);
+  }
+
+  async function handleResume() {
+    if (!activeTimer || activeTimer.type !== 'tummy' || !activeTimer.metadata?.paused) return;
+    if (!currentTummy) return;
+
+    setPauseLoading(true);
+    try {
+      const pausedDurationMs = Date.now() - (activeTimer.metadata.pausedAt as number);
+      const shiftedStart = new Date(new Date(currentTummy.start_time).getTime() + pausedDurationMs);
+
+      const { error } = await supabase
+        .from('tummy_time_logs')
+        .update({ start_time: shiftedStart.toISOString() })
+        .eq('id', currentTummy.id);
+
+      if (error) throw error;
+
+      setActiveTimer({
+        ...activeTimer,
+        metadata: { ...activeTimer.metadata, paused: false, pausedAt: undefined },
+      });
+      setNow(Date.now());
+      invalidateTummyQueries();
+    } catch (error) {
+      Alert.alert('Error', (error as any)?.message || 'Failed to resume');
+    } finally {
+      setPauseLoading(false);
+    }
+  }
+
+  async function handleFinishAndSave() {
+    if (!currentTummy) return;
+
+    setFinishLoading(true);
+    try {
+      const endTime = isPaused ? new Date(pausedAt!) : new Date();
+
+      const { error } = await supabase
+        .from('tummy_time_logs')
+        .update({ end_time: endTime.toISOString() })
+        .eq('id', currentTummy.id);
+
+      if (error) throw error;
+
+      setActiveTimer(null);
+      invalidateTummyQueries();
+    } catch (error) {
+      Alert.alert('Error', (error as any)?.message || 'Failed to save tummy time');
+    } finally {
+      setFinishLoading(false);
     }
   }
 
@@ -95,12 +203,13 @@ export default function AddTummyTimeScreen() {
       return;
     }
 
-    if (endTime <= startTime) {
-      Alert.alert('Error', 'End time must be after start time');
+    const durationMins = parseInt(durationMinutes || '0', 10);
+    if (!durationMins || durationMins <= 0) {
+      Alert.alert('Error', 'Enter a duration greater than 0');
       return;
     }
 
-    setLoading(true);
+    setManualLoading(true);
     try {
       const {
         data: { user },
@@ -111,21 +220,21 @@ export default function AddTummyTimeScreen() {
         return;
       }
 
+      const start = new Date(manualDate);
+      start.setHours(manualStart.getHours(), manualStart.getMinutes(), 0, 0);
+      const end = new Date(start.getTime() + durationMins * 60000);
+
       const { error } = await supabase.from('tummy_time_logs').insert({
         baby_id: baby.id,
         created_by: user.id,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
         notes: notes || null,
       });
 
       if (error) throw error;
 
-      // Invalidate queries to update UI live
-      queryClient.invalidateQueries({ queryKey: ['tummy_logs'] });
-      queryClient.invalidateQueries({ queryKey: ['history'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+      invalidateTummyQueries();
 
       Alert.alert('Success', 'Tummy time logged!', [
         {
@@ -136,132 +245,150 @@ export default function AddTummyTimeScreen() {
     } catch (error) {
       Alert.alert('Error', (error as any)?.message || 'Failed to log tummy time');
     } finally {
-      setLoading(false);
+      setManualLoading(false);
     }
   }
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Tummy Time" leftAction={() => safeBack(router, '/(tabs)')} />
+      <Header title="Tummy Time" leftLabel="‹" leftAction={() => safeBack(router, '/(tabs)')} />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How would you like to log tummy time?</Text>
-
+      <ScrollView ref={scrollRef} style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.pillRow}>
           <TouchableOpacity
-            style={[styles.modeButton, mode === 'start' && styles.modeButtonActive]}
-            onPress={() => setMode('start')}
+            style={[styles.pill, activeTab === 'live' && styles.pillActive]}
+            onPress={() => {
+              setActiveTab('live');
+              scrollRef.current?.scrollTo({ y: 0, animated: true });
+            }}
           >
-            <MaterialCommunityIcons
-              name="play-circle"
-              size={24}
-              color={mode === 'start' ? theme.colors.teal : theme.colors.textSecondary}
-            />
-            <View style={styles.modeButtonText}>
-              <Text style={[styles.modeButtonTitle, mode === 'start' && styles.modeButtonTitleActive]}>
-                Start Now
-              </Text>
-              <Text style={styles.modeButtonSubtitle}>Baby is doing tummy time now</Text>
-            </View>
+            <Text style={[styles.pillText, activeTab === 'live' && styles.pillTextActive]}>Live Timer</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
-            style={[styles.modeButton, mode === 'manual' && styles.modeButtonActive]}
-            onPress={() => setMode('manual')}
+            style={[styles.pill, activeTab === 'manual' && styles.pillActive]}
+            onPress={() => {
+              setActiveTab('manual');
+              scrollRef.current?.scrollTo({ y: manualSectionY.current, animated: true });
+            }}
           >
-            <MaterialCommunityIcons
-              name="clock"
-              size={24}
-              color={mode === 'manual' ? theme.colors.teal : theme.colors.textSecondary}
-            />
-            <View style={styles.modeButtonText}>
-              <Text style={[styles.modeButtonTitle, mode === 'manual' && styles.modeButtonTitleActive]}>
-                Manual Entry
-              </Text>
-              <Text style={styles.modeButtonSubtitle}>Enter past tummy time session</Text>
-            </View>
+            <Text style={[styles.pillText, activeTab === 'manual' && styles.pillTextActive]}>Add Manually</Text>
           </TouchableOpacity>
         </View>
 
-        {mode === 'start' && (
-          <View style={styles.section}>
-            <Text style={styles.description}>
-              {activeTimer?.type === 'tummy'
-                ? 'A tummy time timer is already running.'
-                : 'Start tracking tummy time now. The app will keep the timer running.'}
-            </Text>
+        <View style={styles.timerCard}>
+          <Text style={styles.timerDigits}>{isRunning ? formatStopwatch(elapsedSeconds) : '00:00'}</Text>
+          <Text style={styles.timerStatus}>
+            {isRunning ? (isPaused ? 'Tummy time paused' : 'Tummy time in progress') : 'Not started yet'}
+          </Text>
+        </View>
 
+        {isRunning ? (
+          <>
             <PrimaryButton
-              title={loading ? 'Starting...' : 'Start Tummy Time'}
-              onPress={handleStartTummy}
-              loading={loading}
-              disabled={loading}
-              style={styles.submitButton}
+              title={pauseLoading ? '...' : isPaused ? 'Resume' : 'Pause'}
+              onPress={isPaused ? handleResume : handlePause}
+              loading={pauseLoading}
+              disabled={pauseLoading}
+              style={styles.pauseButton}
+              textStyle={styles.pauseButtonText}
             />
-          </View>
+            <PrimaryButton
+              title={finishLoading ? 'Saving...' : 'Finish & Save'}
+              onPress={handleFinishAndSave}
+              loading={finishLoading}
+              disabled={finishLoading}
+              style={styles.finishButton}
+            />
+          </>
+        ) : (
+          <PrimaryButton
+            title={startLoading ? 'Starting...' : 'Start Tummy Time'}
+            onPress={handleStart}
+            loading={startLoading}
+            disabled={startLoading}
+            style={styles.finishButton}
+          />
         )}
 
-        {mode === 'manual' && (
-          <View style={styles.section}>
-            <Text style={styles.label}>Start Time</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowStartPicker(true)}
-            >
-              <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.teal} />
-              <Text style={styles.dateButtonText}>{formatTime(startTime)}</Text>
-            </TouchableOpacity>
-            {showStartPicker && (
-              <DateTimePicker
-                value={startTime}
-                mode="time"
-                display="spinner"
-                onChange={(event, selected) => {
-                  setShowStartPicker(false);
-                  if (selected) setStartTime(selected);
-                }}
-              />
-            )}
+        <View onLayout={(e) => (manualSectionY.current = e.nativeEvent.layout.y)}>
+          <Text style={styles.sectionHeading}>Manual entry</Text>
 
-            <Text style={styles.label}>End Time</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowEndPicker(true)}
-            >
-              <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.teal} />
-              <Text style={styles.dateButtonText}>{formatTime(endTime)}</Text>
-            </TouchableOpacity>
-            {showEndPicker && (
-              <DateTimePicker
-                value={endTime}
-                mode="time"
-                display="spinner"
-                onChange={(event, selected) => {
-                  setShowEndPicker(false);
-                  if (selected) setEndTime(selected);
-                }}
-              />
-            )}
+          <View style={styles.manualCard}>
+            <View style={styles.manualRow}>
+              <TouchableOpacity style={styles.fieldCell} onPress={() => setShowStartPicker(true)}>
+                <Text style={styles.fieldLabel}>Start time</Text>
+                <Text style={styles.fieldValue}>{formatTime(manualStart)}</Text>
+              </TouchableOpacity>
+              <View style={styles.fieldCell}>
+                <Text style={styles.fieldLabel}>Duration</Text>
+                <View style={styles.durationInputRow}>
+                  <TextInput
+                    style={styles.durationInput}
+                    value={durationMinutes}
+                    onChangeText={setDurationMinutes}
+                    keyboardType="number-pad"
+                    placeholder="0"
+                    placeholderTextColor={theme.colors.textSecondary}
+                  />
+                  <Text style={styles.fieldValue}>m</Text>
+                </View>
+              </View>
+            </View>
 
-            <Text style={styles.label}>Notes (Optional)</Text>
-            <TextInput
-              style={[styles.inputField, styles.notesInput]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Add notes..."
-              placeholderTextColor={theme.colors.textSecondary}
-              multiline
-              numberOfLines={3}
-            />
+            <View style={styles.manualRow}>
+              <TouchableOpacity style={styles.fieldCell} onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.fieldLabel}>Date</Text>
+                <Text style={styles.fieldValue}>{isToday(manualDate) ? 'Today' : formatDate(manualDate)}</Text>
+              </TouchableOpacity>
+              <View style={styles.fieldCell}>
+                <Text style={styles.fieldLabel}>Notes</Text>
+                <TextInput
+                  style={styles.notesInput}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Optional"
+                  placeholderTextColor={theme.colors.textSecondary}
+                />
+              </View>
+            </View>
 
-            <PrimaryButton
-              title={loading ? 'Saving...' : 'Save Tummy Time'}
-              onPress={handleManualEntry}
-              loading={loading}
-              disabled={loading}
-              style={styles.submitButton}
-            />
+            <Text style={styles.helperText}>Use this for tummy time you forgot to start live.</Text>
           </View>
+
+          <PrimaryButton
+            title={manualLoading ? 'Saving...' : 'Add Manual Session'}
+            onPress={handleManualEntry}
+            loading={manualLoading}
+            disabled={manualLoading}
+            variant="secondary"
+            style={styles.addManualButton}
+            textStyle={styles.addManualButtonText}
+          />
+        </View>
+
+        {showStartPicker && (
+          <DateTimePicker
+            value={manualStart}
+            mode="time"
+            display="spinner"
+            onChange={(event, selected) => {
+              setShowStartPicker(false);
+              if (selected) setManualStart(selected);
+            }}
+          />
+        )}
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={manualDate}
+            mode="date"
+            display="spinner"
+            maximumDate={new Date()}
+            onChange={(event, selected) => {
+              setShowDatePicker(false);
+              if (selected) setManualDate(selected);
+            }}
+          />
         )}
       </ScrollView>
     </ScreenContainer>
@@ -274,94 +401,119 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
   },
-  section: {
+  pillRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
     marginBottom: theme.spacing.xl,
   },
-  sectionTitle: {
+  pill: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: 24,
+    alignItems: 'center',
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  pillActive: {
+    backgroundColor: AMBER,
+    borderColor: AMBER,
+  },
+  pillText: {
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600' as const,
+    color: AMBER,
+  },
+  pillTextActive: {
+    color: theme.colors.white,
+  },
+  timerCard: {
+    backgroundColor: AMBER_LIGHT,
+    borderRadius: theme.borderRadius.card,
+    paddingVertical: theme.spacing.xxl,
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl,
+  },
+  timerDigits: {
+    fontSize: 48,
+    fontWeight: '700' as const,
+    color: AMBER,
+  },
+  timerStatus: {
+    fontSize: theme.typography.cardHeadline.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.text,
+    marginTop: theme.spacing.md,
+  },
+  pauseButton: {
+    backgroundColor: AMBER_PALE,
+    marginBottom: theme.spacing.md,
+  },
+  pauseButtonText: {
+    color: AMBER,
+  },
+  finishButton: {
+    backgroundColor: AMBER,
+    marginBottom: theme.spacing.xl,
+  },
+  sectionHeading: {
     fontSize: theme.typography.sectionTitle.fontSize,
     fontWeight: theme.typography.sectionTitle.fontWeight,
     color: theme.colors.text,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
-  label: {
-    fontSize: theme.typography.label.fontSize,
-    fontWeight: theme.typography.label.fontWeight,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  description: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.lg,
-    lineHeight: 20,
-  },
-  modeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+  manualCard: {
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.input,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.input,
-    marginBottom: theme.spacing.md,
-    backgroundColor: theme.colors.white,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
   },
-  modeButtonActive: {
-    backgroundColor: theme.colors.mint,
-    borderColor: theme.colors.teal,
+  manualRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
   },
-  modeButtonText: {
-    marginLeft: theme.spacing.md,
+  fieldCell: {
     flex: 1,
   },
-  modeButtonTitle: {
-    fontSize: theme.typography.body.fontSize,
+  fieldLabel: {
+    fontSize: theme.typography.metadata.fontSize,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xs,
+  },
+  fieldValue: {
+    fontSize: theme.typography.bodyLarge.fontSize,
     fontWeight: '600' as const,
     color: theme.colors.text,
   },
-  modeButtonTitleActive: {
-    color: theme.colors.teal,
-  },
-  modeButtonSubtitle: {
-    fontSize: theme.typography.metadata.fontSize,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
-  },
-  dateButton: {
+  durationInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.input,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.white,
+    gap: theme.spacing.xs,
   },
-  dateButtonText: {
-    fontSize: theme.typography.body.fontSize,
+  durationInput: {
+    fontSize: theme.typography.bodyLarge.fontSize,
+    fontWeight: '600' as const,
     color: theme.colors.text,
-    marginLeft: theme.spacing.md,
-  },
-  inputField: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.input,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.white,
-    minHeight: 48,
-    justifyContent: 'center',
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text,
+    minWidth: 30,
+    padding: 0,
   },
   notesInput: {
-    minHeight: 100,
-    paddingTop: theme.spacing.md,
-    textAlignVertical: 'top',
+    fontSize: theme.typography.bodyLarge.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.text,
+    padding: 0,
   },
-  submitButton: {
+  helperText: {
+    fontSize: theme.typography.metadata.fontSize,
+    color: theme.colors.textSecondary,
+  },
+  addManualButton: {
     marginBottom: theme.spacing.xl,
+  },
+  addManualButtonText: {
+    color: AMBER,
   },
 });

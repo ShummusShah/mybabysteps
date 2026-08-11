@@ -19,7 +19,7 @@ export function TodayTimeline({ items, isLoading, onItemPress }: TodayTimelinePr
       case 'nappy':
         return '#FF8B5C';
       case 'tummy':
-        return '#5B8DEF';
+        return theme.colors.yellowAccent;
       case 'medicine':
         return '#EC4899';
       case 'temperature':
