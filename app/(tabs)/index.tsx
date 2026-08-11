@@ -92,7 +92,7 @@ export default function HomeScreen() {
             icon="sleep"
             backgroundColor="#EEE8FF"
             accentColor="#8A73D6"
-            onPress={() => currentSleep ? router.push(`/sleep/${currentSleep.id}`) : latestSleep ? router.push(`/sleep/${latestSleep.id}`) : router.push('/sleep/add')}
+            onPress={() => currentSleep ? router.push('/sleep/add') : latestSleep ? router.push(`/sleep/${latestSleep.id}`) : router.push('/sleep/add')}
           />
 
           <TrackingStatusCard

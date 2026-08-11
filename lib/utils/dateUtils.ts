@@ -83,6 +83,19 @@ export function formatDuration(seconds: number): string {
   return `${hours}h ${remainingMinutes}m`;
 }
 
+export function formatStopwatch(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  if (hours > 0) {
+    return `${hours}:${pad(minutes)}:${pad(secs)}`;
+  }
+  return `${pad(minutes)}:${pad(secs)}`;
+}
+
 export function formatDurationShort(seconds: number): string {
   if (seconds < 60) {
     return `${seconds}s`;
