@@ -103,6 +103,7 @@ export function useBaby() {
           .from('households')
           .insert({
             name: householdName,
+            owner_user_id: user.id,
           })
           .select()
           .single();

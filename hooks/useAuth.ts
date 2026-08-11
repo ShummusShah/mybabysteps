@@ -171,6 +171,7 @@ export function useAuth() {
           .from('households')
           .insert({
             name: `${displayName}'s Household`,
+            owner_user_id: data.user.id,
           })
           .select()
           .single();
