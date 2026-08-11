@@ -88,13 +88,26 @@ export function useBaby() {
         console.log('Found existing household:', householdId);
       } else {
         console.log('No household found, creating one...');
-        // Create household if it doesn't exist
-        const { data: profile } = await supabase
+
+        // Ensure profile exists before creating household
+        let profile = await supabase
           .from('profiles')
           .select('display_name')
           .eq('id', user.id);
 
-        const displayName = profile?.[0]?.display_name || 'User';
+        let displayName = profile.data?.[0]?.display_name;
+
+        if (!displayName) {
+          console.log('Profile not found, creating profile...');
+          // Create profile if it doesn't exist
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            display_name: user.email?.split('@')[0] || 'User',
+          });
+          displayName = user.email?.split('@')[0] || 'User';
+        }
+
         const householdName = `${displayName}'s Household`;
 
         console.log('Creating household with name:', householdName);
