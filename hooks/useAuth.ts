@@ -133,11 +133,32 @@ export function useAuth() {
       if (error) throw error;
 
       if (data.user) {
+        // Create profile
         await supabase.from('profiles').insert({
           id: data.user.id,
           email,
           display_name: displayName,
         });
+
+        // Create household for the user
+        const { data: householdData, error: householdError } = await supabase
+          .from('households')
+          .insert({
+            name: `${displayName}'s Household`,
+          })
+          .select()
+          .single();
+
+        if (householdError) throw householdError;
+
+        // Add user to household
+        if (householdData) {
+          await supabase.from('household_members').insert({
+            household_id: householdData.id,
+            user_id: data.user.id,
+            role: 'admin',
+          });
+        }
       }
 
       return { data, error: null };
