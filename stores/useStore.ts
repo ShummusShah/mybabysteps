@@ -141,7 +141,20 @@ export const useStore = create<StoreState>((set) => ({
       set({
         currentBabyId: babyId || null,
         activeTimer: timerStr ? JSON.parse(timerStr) : null,
-        quickLogModules: modulesStr ? JSON.parse(modulesStr) : [],
+        quickLogModules: modulesStr
+          ? JSON.parse(modulesStr)
+          : [
+              { type: 'feed', enabled: true, order: 0 },
+              { type: 'sleep', enabled: true, order: 1 },
+              { type: 'nappy', enabled: true, order: 2 },
+              { type: 'tummy', enabled: true, order: 3 },
+              { type: 'pump', enabled: true, order: 4 },
+              { type: 'medicine', enabled: true, order: 5 },
+              { type: 'temperature', enabled: true, order: 6 },
+              { type: 'growth', enabled: true, order: 7 },
+              { type: 'milestone', enabled: true, order: 8 },
+              { type: 'photo', enabled: true, order: 9 },
+            ],
         userPreferences: prefsStr
           ? JSON.parse(prefsStr)
           : {
