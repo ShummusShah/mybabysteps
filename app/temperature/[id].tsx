@@ -15,7 +15,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
-import { formatTime, formatTemperature } from '@/lib/utils/unitConversion';
+import { formatTime } from '@/lib/utils/dateUtils';
 
 export default function TemperatureDetailsScreen() {
   const router = useRouter();
@@ -84,9 +84,12 @@ export default function TemperatureDetailsScreen() {
     );
   }
 
-  const logTime = new Date(temperatureLog.logged_at);
-  const tempFormatted = formatTemperature(temperatureLog.temperature_celsius, temperatureLog.unit);
-  const isFever = temperatureLog.temperature_celsius >= 38;
+  const logTime = new Date(temperatureLog.taken_at);
+  const tempFormatted = `${temperatureLog.temperature.toFixed(1)}°${temperatureLog.unit}`;
+  const isFever =
+    temperatureLog.unit === 'C'
+      ? temperatureLog.temperature >= 38
+      : temperatureLog.temperature >= 100.4;
 
   return (
     <ScreenContainer scrollable>
@@ -111,7 +114,7 @@ export default function TemperatureDetailsScreen() {
 
           <View style={styles.detail}>
             <Text style={styles.label}>Unit</Text>
-            <Text style={styles.value}>{temperatureLog.unit === 'celsius' ? '°C' : '°F'}</Text>
+            <Text style={styles.value}>°{temperatureLog.unit}</Text>
           </View>
 
           {temperatureLog.notes && (

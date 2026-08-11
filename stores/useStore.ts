@@ -54,6 +54,7 @@ interface StoreState {
 
   userPreferences: {
     weightUnit: 'kg' | 'lb';
+    heightUnit: 'cm' | 'inches';
     milkUnit: 'ml' | 'fl_oz';
     temperatureUnit: 'celsius' | 'fahrenheit';
     timeFormat: '12h' | '24h';
@@ -104,6 +105,7 @@ export const useStore = create<StoreState>((set) => ({
 
   userPreferences: {
     weightUnit: 'kg',
+    heightUnit: 'cm',
     milkUnit: 'ml',
     temperatureUnit: 'celsius',
     timeFormat: '24h',
@@ -159,6 +161,7 @@ export const useStore = create<StoreState>((set) => ({
           ? JSON.parse(prefsStr)
           : {
               weightUnit: 'kg',
+              heightUnit: 'cm',
               milkUnit: 'ml',
               temperatureUnit: 'celsius',
               timeFormat: '24h',
