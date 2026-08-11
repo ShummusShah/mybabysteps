@@ -24,7 +24,7 @@ export default function InsightsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Insights & Analytics</Text>
-          <Text style={styles.subtitle}>Track your baby's patterns</Text>
+          <Text style={styles.subtitle}>Track your baby&apos;s patterns</Text>
         </View>
 
         {/* Time Range Selector */}

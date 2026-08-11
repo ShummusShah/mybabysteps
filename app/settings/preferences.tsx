@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Switch,
   FlatList,
   Modal,
 } from 'react-native';
@@ -19,6 +18,56 @@ interface PreferenceOption {
   label: string;
   value: string;
 }
+
+const PreferenceOptionRow = ({ option, selected, onPress }: { option: PreferenceOption; selected: boolean; onPress: () => void }) => (
+  <TouchableOpacity style={styles.modalOption} onPress={onPress}>
+    <Text style={[styles.modalOptionText, selected && styles.modalOptionTextSelected]}>
+      {option.label}
+    </Text>
+    {selected && (
+      <MaterialCommunityIcons name="check" size={20} color={theme.colors.teal} />
+    )}
+  </TouchableOpacity>
+);
+
+interface UnitModalProps {
+  visible: boolean;
+  title: string;
+  options: PreferenceOption[];
+  currentValue: string;
+  onSelect: (value: string) => void;
+  onClose: () => void;
+}
+
+const UnitModal = ({ visible, title, options, currentValue, onSelect, onClose }: UnitModalProps) => (
+  <Modal visible={visible} transparent animationType="slide">
+    <SafeAreaView style={styles.modalContainer}>
+      <View style={styles.modalHeader}>
+        <TouchableOpacity onPress={onClose}>
+          <Text style={styles.modalCloseText}>Close</Text>
+        </TouchableOpacity>
+        <Text style={styles.modalTitle}>{title}</Text>
+        <View style={{ width: 50 }} />
+      </View>
+
+      <FlatList
+        data={options}
+        keyExtractor={(item) => item.value}
+        renderItem={({ item }) => (
+          <PreferenceOptionRow
+            option={item}
+            selected={currentValue === item.value}
+            onPress={() => {
+              onSelect(item.value);
+              onClose();
+            }}
+          />
+        )}
+        style={styles.modalList}
+      />
+    </SafeAreaView>
+  </Modal>
+);
 
 export default function PreferencesScreen() {
   const router = useRouter();
@@ -36,60 +85,9 @@ export default function PreferencesScreen() {
     { label: 'Fluid Ounces (fl oz)', value: 'fl_oz' },
   ];
 
-  const temperatureUnits: PreferenceOption[] = [
-    { label: 'Celsius (°C)', value: 'celsius' },
-    { label: 'Fahrenheit (°F)', value: 'fahrenheit' },
-  ];
-
-  const timeFormats: PreferenceOption[] = [
-    { label: '12-hour (AM/PM)', value: '12h' },
-    { label: '24-hour', value: '24h' },
-  ];
-
   const handleUnitChange = (key: string, value: string) => {
     setUserPreferences({ [key]: value as any });
   };
-
-  const PreferenceOption = ({ option, selected, onPress }: any) => (
-    <TouchableOpacity style={styles.modalOption} onPress={onPress}>
-      <Text style={[styles.modalOptionText, selected && styles.modalOptionTextSelected]}>
-        {option.label}
-      </Text>
-      {selected && (
-        <MaterialCommunityIcons name="check" size={20} color={theme.colors.teal} />
-      )}
-    </TouchableOpacity>
-  );
-
-  const UnitModal = ({ visible, title, options, currentValue, onSelect, onClose }: any) => (
-    <Modal visible={visible} transparent animationType="slide">
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.modalCloseText}>Close</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>{title}</Text>
-          <View style={{ width: 50 }} />
-        </View>
-
-        <FlatList
-          data={options}
-          keyExtractor={(item) => item.value}
-          renderItem={({ item }) => (
-            <PreferenceOption
-              option={item}
-              selected={currentValue === item.value}
-              onPress={() => {
-                onSelect(item.value);
-                onClose();
-              }}
-            />
-          )}
-          style={styles.modalList}
-        />
-      </SafeAreaView>
-    </Modal>
-  );
 
   return (
     <SafeAreaView style={styles.container}>

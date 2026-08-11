@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { SegmentedControl } from '@react-native-segmented-control/segmented-control';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -127,15 +126,27 @@ export default function AddFeedScreen() {
         {/* Feed Type Selection */}
         <View style={styles.section}>
           <Text style={styles.label}>Feed Type</Text>
-          <SegmentedControl
-            values={feedTypes}
-            selectedIndex={feedType}
-            onChange={(event) => {
-              setFeedType(event.nativeEvent.selectedSegmentIndex);
-            }}
-            style={styles.segmentedControl}
-            tintColor={theme.colors.teal}
-          />
+          <View style={styles.segmentedControl}>
+            {feedTypes.map((label, index) => (
+              <TouchableOpacity
+                key={label}
+                style={[
+                  styles.segmentButton,
+                  feedType === index && styles.segmentButtonActive,
+                ]}
+                onPress={() => setFeedType(index)}
+              >
+                <Text
+                  style={[
+                    styles.segmentButtonText,
+                    feedType === index && styles.segmentButtonTextActive,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Breastfeed */}
@@ -329,7 +340,29 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: theme.colors.border,
+    borderRadius: theme.borderRadius.input,
+    padding: 2,
     height: 40,
+  },
+  segmentButton: {
+    flex: 1,
+    borderRadius: theme.borderRadius.input - 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  segmentButtonActive: {
+    backgroundColor: theme.colors.white,
+  },
+  segmentButtonText: {
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '500' as const,
+    color: theme.colors.textSecondary,
+  },
+  segmentButtonTextActive: {
+    color: theme.colors.teal,
+    fontWeight: '600' as const,
   },
   durationRow: {
     flexDirection: 'row',

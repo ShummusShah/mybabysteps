@@ -43,7 +43,7 @@ export default function ProfileScreen() {
             <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
             <MaterialCommunityIcons name="cog" size={24} color={theme.colors.teal} />
             <Text style={styles.menuLabel}>Settings</Text>
             <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -14,7 +13,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useBaby } from '@/hooks/useBaby';
 import { useStore } from '@/stores/useStore';
-import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
 
 interface SettingsItem {

@@ -118,7 +118,7 @@ export default function BabySettingsScreen() {
         <View style={styles.infoSection}>
           <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.teal} />
           <Text style={styles.infoText}>
-            Update your baby's information. This will be reflected throughout the app.
+            Update your baby&apos;s information. This will be reflected throughout the app.
           </Text>
         </View>
       </ScrollView>

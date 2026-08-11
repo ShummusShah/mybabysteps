@@ -1,8 +1,23 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Tabs } from 'expo-router';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
+
+function CenterTabButton() {
+  const router = useRouter();
+  return (
+    <View style={styles.centerButtonWrapper}>
+      <TouchableOpacity
+        style={styles.centerButton}
+        onPress={() => router.push('/quick-log')}
+        activeOpacity={0.85}
+      >
+        <MaterialCommunityIcons name="plus" size={28} color="white" />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -12,7 +27,7 @@ export default function TabsLayout() {
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarActiveTintColor: theme.colors.teal,
-        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarInactiveTintColor: '#77808F',
       }}
     >
       <Tabs.Screen
@@ -37,7 +52,7 @@ export default function TabsLayout() {
         name="quick-log"
         options={{
           title: '',
-          tabBarButton: () => <View />,
+          tabBarButton: () => <CenterTabButton />,
         }}
       />
       <Tabs.Screen
@@ -52,10 +67,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -74,15 +86,30 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: theme.colors.white,
-    borderTopColor: theme.colors.border,
+    borderTopColor: '#E9EDF2',
     borderTopWidth: 1,
-    paddingBottom: 8,
+    paddingBottom: 10,
     paddingTop: 8,
-    height: 60,
+    height: 82,
   },
   tabBarLabel: {
     fontSize: 11,
     fontWeight: '500' as const,
     marginTop: 4,
+  },
+  centerButtonWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  centerButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: theme.colors.teal,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -22,
+    ...theme.shadows.medium,
   },
 });
