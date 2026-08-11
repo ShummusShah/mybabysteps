@@ -25,7 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 
 interface LogEntry {
   id: string;
-  type: 'feed' | 'sleep' | 'nappy';
+  type: 'feed' | 'sleep' | 'nappy' | 'medicine' | 'temperature';
   timestamp: string;
   title: string;
   subtitle: string;
@@ -46,7 +46,7 @@ export default function HistoryScreen() {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const [feeds, sleeps, nappies] = await Promise.all([
+      const [feeds, sleeps, nappies, medicines, temperatures] = await Promise.all([
         supabase
           .from('feeding_logs')
           .select('*')
@@ -61,6 +61,18 @@ export default function HistoryScreen() {
           .order('start_time', { ascending: false }),
         supabase
           .from('nappy_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('logged_at', sevenDaysAgo.toISOString())
+          .order('logged_at', { ascending: false }),
+        supabase
+          .from('medicine_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('logged_at', sevenDaysAgo.toISOString())
+          .order('logged_at', { ascending: false }),
+        supabase
+          .from('temperature_logs')
           .select('*')
           .eq('baby_id', baby.id)
           .gte('logged_at', sevenDaysAgo.toISOString())
@@ -114,6 +126,34 @@ export default function HistoryScreen() {
         });
       });
 
+      (medicines.data || []).forEach((medicine) => {
+        items.push({
+          id: medicine.id,
+          type: 'medicine',
+          timestamp: medicine.logged_at,
+          title: 'Medicine',
+          subtitle: medicine.name,
+          icon: 'pill',
+          data: medicine,
+        });
+      });
+
+      (temperatures.data || []).forEach((temperature) => {
+        const displayTemp =
+          temperature.unit === 'celsius'
+            ? `${temperature.temperature_celsius}°C`
+            : `${Math.round((temperature.temperature_celsius * 9/5) + 32)}°F`;
+        items.push({
+          id: temperature.id,
+          type: 'temperature',
+          timestamp: temperature.logged_at,
+          title: 'Temperature',
+          subtitle: displayTemp,
+          icon: temperature.temperature_celsius >= 38 ? 'thermometer-alert' : 'thermometer',
+          data: temperature,
+        });
+      });
+
       return items.sort(
         (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
@@ -127,6 +167,8 @@ export default function HistoryScreen() {
     if (item.type === 'feed') router.push(`/feed/${item.id}`);
     else if (item.type === 'sleep') router.push(`/sleep/${item.id}`);
     else if (item.type === 'nappy') router.push(`/nappy/${item.id}`);
+    else if (item.type === 'medicine') router.push(`/medicine/${item.id}`);
+    else if (item.type === 'temperature') router.push(`/temperature/${item.id}`);
   };
 
   return (
