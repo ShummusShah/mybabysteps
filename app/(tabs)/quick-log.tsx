@@ -23,7 +23,7 @@ const routeMap: Record<string, string> = {
   feed: '/feed/add',
   sleep: '/sleep/add',
   nappy: '/nappy/add',
-  pump: '/pump/add',
+  pump: '/feed/add?type=pump',
   tummy: '/tummy/add',
   medicine: '/medicine/add',
   temperature: '/temperature/add',

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -241,11 +242,15 @@ export default function AddTummyTimeScreen() {
             )}
 
             <Text style={styles.label}>Notes (Optional)</Text>
-            <TouchableOpacity style={[styles.inputField, styles.notesInput]}>
-              <Text style={notes ? styles.inputText : styles.placeholderText}>
-                {notes || 'Add notes...'}
-              </Text>
-            </TouchableOpacity>
+            <TextInput
+              style={[styles.inputField, styles.notesInput]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Add notes..."
+              placeholderTextColor={theme.colors.textSecondary}
+              multiline
+              numberOfLines={3}
+            />
 
             <PrimaryButton
               title={loading ? 'Saving...' : 'Save Tummy Time'}
@@ -346,18 +351,13 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
     minHeight: 48,
     justifyContent: 'center',
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.text,
   },
   notesInput: {
     minHeight: 100,
     paddingTop: theme.spacing.md,
-  },
-  inputText: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text,
-  },
-  placeholderText: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textSecondary,
+    textAlignVertical: 'top',
   },
   submitButton: {
     marginBottom: theme.spacing.xl,

@@ -7,8 +7,9 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -20,7 +21,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
-import { formatMilk } from '@/lib/utils/unitConversion';
+import { flOzToMl } from '@/lib/utils/unitConversion';
 import { useStore } from '@/stores/useStore';
 
 const feedSchema = z.object({
@@ -36,16 +37,20 @@ type FeedFormData = z.infer<typeof feedSchema>;
 
 export default function AddFeedScreen() {
   const router = useRouter();
+  const { type } = useLocalSearchParams<{ type?: string }>();
   const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { userPreferences } = useStore();
-  const [feedType, setFeedType] = useState(0); // 0=breast, 1=bottle, 2=pump
+  const [feedType, setFeedType] = useState(type === 'pump' ? 2 : 0); // 0=breast, 1=bottle, 2=pump
   const [loading, setLoading] = useState(false);
 
   const { control, handleSubmit, formState: { errors } } = useForm<FeedFormData>({
     resolver: zodResolver(feedSchema),
     defaultValues: {
       feedType: 'breast',
+      amount: '',
+      leftDuration: '',
+      rightDuration: '',
       notes: '',
     },
   });
@@ -77,10 +82,20 @@ export default function AddFeedScreen() {
       const now = new Date();
       let leftSeconds = 0;
       let rightSeconds = 0;
+      let amountMl: number | null = null;
+
+      const toMl = (value: string) => {
+        const parsed = parseFloat(value || '0');
+        return userPreferences.milkUnit === 'fl_oz' ? flOzToMl(parsed) : parsed;
+      };
 
       if (selectedFeedType === 'breast') {
-        leftSeconds = parseInt(data.leftDuration || '0') * 60;
-        rightSeconds = parseInt(data.rightDuration || '0') * 60;
+        leftSeconds = parseInt(data.leftDuration || '0', 10) * 60;
+        rightSeconds = parseInt(data.rightDuration || '0', 10) * 60;
+      } else if (selectedFeedType === 'bottle') {
+        amountMl = toMl(data.amount || '0');
+      } else if (selectedFeedType === 'pump') {
+        amountMl = toMl(data.leftDuration || '0') + toMl(data.rightDuration || '0');
       }
 
       const { error } = await supabase.from('feeding_logs').insert({
@@ -88,7 +103,7 @@ export default function AddFeedScreen() {
         created_by: user.id,
         feed_type: selectedFeedType,
         milk_type: selectedFeedType === 'bottle' ? data.milkType : null,
-        amount_ml: selectedFeedType === 'bottle' ? parseInt(data.amount || '0') : null,
+        amount_ml: amountMl,
         left_duration_seconds: selectedFeedType === 'breast' ? leftSeconds : null,
         right_duration_seconds: selectedFeedType === 'breast' ? rightSeconds : null,
         start_time: now.toISOString(),
@@ -161,14 +176,14 @@ export default function AddFeedScreen() {
                   control={control}
                   name="leftDuration"
                   render={({ field: { onChange, value } }) => (
-                    <TouchableOpacity
+                    <TextInput
                       style={styles.inputField}
-                      onPress={() => {
-                        // Would open a number picker or timer
-                      }}
-                    >
-                      <Text style={styles.inputText}>{value || '0'}</Text>
-                    </TouchableOpacity>
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="0"
+                      placeholderTextColor={theme.colors.textSecondary}
+                      keyboardType="number-pad"
+                    />
                   )}
                 />
               </View>
@@ -179,14 +194,14 @@ export default function AddFeedScreen() {
                   control={control}
                   name="rightDuration"
                   render={({ field: { onChange, value } }) => (
-                    <TouchableOpacity
+                    <TextInput
                       style={styles.inputField}
-                      onPress={() => {
-                        // Would open a number picker or timer
-                      }}
-                    >
-                      <Text style={styles.inputText}>{value || '0'}</Text>
-                    </TouchableOpacity>
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="0"
+                      placeholderTextColor={theme.colors.textSecondary}
+                      keyboardType="number-pad"
+                    />
                   )}
                 />
               </View>
@@ -233,14 +248,14 @@ export default function AddFeedScreen() {
               control={control}
               name="amount"
               render={({ field: { onChange, value } }) => (
-                <TouchableOpacity
+                <TextInput
                   style={styles.inputField}
-                  onPress={() => {
-                    // Would open a number picker
-                  }}
-                >
-                  <Text style={styles.inputText}>{value || '0'}</Text>
-                </TouchableOpacity>
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="0"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  keyboardType="decimal-pad"
+                />
               )}
             />
           </View>
@@ -253,33 +268,37 @@ export default function AddFeedScreen() {
 
             <View style={styles.durationRow}>
               <View style={styles.durationInput}>
-                <Text style={styles.durationLabel}>Left ({userPreferences.milkUnit})</Text>
+                <Text style={styles.durationLabel}>Left ({userPreferences.milkUnit === 'ml' ? 'ml' : 'fl oz'})</Text>
                 <Controller
                   control={control}
                   name="leftDuration"
                   render={({ field: { onChange, value } }) => (
-                    <TouchableOpacity
+                    <TextInput
                       style={styles.inputField}
-                      onPress={() => {}}
-                    >
-                      <Text style={styles.inputText}>{value || '0'}</Text>
-                    </TouchableOpacity>
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="0"
+                      placeholderTextColor={theme.colors.textSecondary}
+                      keyboardType="decimal-pad"
+                    />
                   )}
                 />
               </View>
 
               <View style={styles.durationInput}>
-                <Text style={styles.durationLabel}>Right ({userPreferences.milkUnit})</Text>
+                <Text style={styles.durationLabel}>Right ({userPreferences.milkUnit === 'ml' ? 'ml' : 'fl oz'})</Text>
                 <Controller
                   control={control}
                   name="rightDuration"
                   render={({ field: { onChange, value } }) => (
-                    <TouchableOpacity
+                    <TextInput
                       style={styles.inputField}
-                      onPress={() => {}}
-                    >
-                      <Text style={styles.inputText}>{value || '0'}</Text>
-                    </TouchableOpacity>
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="0"
+                      placeholderTextColor={theme.colors.textSecondary}
+                      keyboardType="decimal-pad"
+                    />
                   )}
                 />
               </View>
@@ -294,14 +313,15 @@ export default function AddFeedScreen() {
             control={control}
             name="notes"
             render={({ field: { onChange, value } }) => (
-              <TouchableOpacity
+              <TextInput
                 style={[styles.inputField, styles.notesInput]}
-                onPress={() => {}}
-              >
-                <Text style={value ? styles.inputText : styles.placeholderText}>
-                  {value || 'Add notes...'}
-                </Text>
-              </TouchableOpacity>
+                value={value}
+                onChangeText={onChange}
+                placeholder="Add notes..."
+                placeholderTextColor={theme.colors.textSecondary}
+                multiline
+                numberOfLines={3}
+              />
             )}
           />
         </View>
@@ -385,18 +405,13 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     minHeight: 48,
     justifyContent: 'center',
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.text,
   },
   notesInput: {
     minHeight: 100,
     paddingTop: theme.spacing.md,
-  },
-  inputText: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text,
-  },
-  placeholderText: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textSecondary,
+    textAlignVertical: 'top',
   },
   milkTypeButtons: {
     flexDirection: 'row',
