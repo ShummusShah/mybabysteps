@@ -138,7 +138,7 @@ export function useBaby() {
           .insert({
             household_id: householdData.id,
             user_id: user.id,
-            role: 'admin',
+            role: 'owner',
           });
 
         if (memberInsertError) {

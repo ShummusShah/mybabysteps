@@ -183,7 +183,7 @@ export function useAuth() {
           await supabase.from('household_members').insert({
             household_id: householdData.id,
             user_id: data.user.id,
-            role: 'admin',
+            role: 'owner',
           });
         }
       }
