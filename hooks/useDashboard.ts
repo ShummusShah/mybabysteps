@@ -58,7 +58,9 @@ export function useDashboard() {
         .select('*')
         .eq('baby_id', baby.id)
         .is('end_time', null)
-        .single();
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) return null;
       return data;
