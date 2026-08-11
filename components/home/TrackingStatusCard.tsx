@@ -11,6 +11,7 @@ interface TrackingStatusCardProps {
   backgroundColor: string;
   accentColor: string;
   onPress?: () => void;
+  onIconPress?: () => void;
 }
 
 export function TrackingStatusCard({
@@ -22,6 +23,7 @@ export function TrackingStatusCard({
   backgroundColor,
   accentColor,
   onPress,
+  onIconPress,
 }: TrackingStatusCardProps) {
   const iconLetter = type === 'feeding' ? 'F' : type === 'sleep' ? 'S' : 'N';
 
@@ -31,9 +33,14 @@ export function TrackingStatusCard({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <View style={[styles.iconCircle, { backgroundColor: 'white' }]}>
+      <TouchableOpacity
+        style={[styles.iconCircle, { backgroundColor: 'white' }]}
+        onPress={onIconPress}
+        disabled={!onIconPress}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
         <Text style={[styles.iconLetter, { color: accentColor }]}>{iconLetter}</Text>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.content}>
         <Text style={[styles.title, { color: accentColor }]}>{title}</Text>

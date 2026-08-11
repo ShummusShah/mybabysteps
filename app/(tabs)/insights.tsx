@@ -1,47 +1,52 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import { LineChart } from '@/components/charts/LineChart';
-import { BarChart } from '@/components/charts/BarChart';
 import { theme } from '@/constants/theme';
+import { useInsightsSummary, InsightsRange } from '@/hooks/useInsightsSummary';
+
+const RANGE_OPTIONS: { value: InsightsRange; label: string }[] = [
+  { value: 7, label: '7 Days' },
+  { value: 30, label: '30 Days' },
+  { value: 'all', label: 'All time' },
+];
+
+function formatHoursMinutes(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.round(minutes % 60);
+  return `${hours}h ${mins}m`;
+}
 
 export default function InsightsScreen() {
-  const [timeRange, setTimeRange] = useState<7 | 14 | 30>(7);
-  const { feedingTrend, sleepTrend, nappyTrend, feedingAverage, sleepAverage, nappyAverage, isLoading } = useAnalytics(timeRange);
+  const router = useRouter();
+  const [range, setRange] = useState<InsightsRange>(7);
+  const {
+    averageSleepMinutes,
+    feedsPerDay,
+    avgBottleMl,
+    nappiesPerDay,
+    tummyMinutesPerDay,
+    weightChangeKgPerWeek,
+    sleepInsight,
+    isLoading,
+  } = useInsightsSummary(range);
+
+  const periodLabel = range === 7 ? 'This week' : range === 30 ? 'This month' : 'Overall';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Insights & Analytics</Text>
-          <Text style={styles.subtitle}>Track your baby&apos;s patterns</Text>
-        </View>
+        <Text style={styles.title}>Insights</Text>
 
-        {/* Time Range Selector */}
-        <View style={styles.timeRangeContainer}>
-          {([7, 14, 30] as const).map((range) => (
+        <View style={styles.rangeRow}>
+          {RANGE_OPTIONS.map((opt) => (
             <TouchableOpacity
-              key={range}
-              style={[styles.timeRangeButton, timeRange === range && styles.timeRangeButtonActive]}
-              onPress={() => setTimeRange(range)}
+              key={String(opt.value)}
+              style={[styles.rangePill, range === opt.value && styles.rangePillActive]}
+              onPress={() => setRange(opt.value)}
             >
-              <Text
-                style={[
-                  styles.timeRangeText,
-                  timeRange === range && styles.timeRangeTextActive,
-                ]}
-              >
-                {range}d
+              <Text style={[styles.rangePillText, range === opt.value && styles.rangePillTextActive]}>
+                {opt.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -53,87 +58,71 @@ export default function InsightsScreen() {
           </View>
         ) : (
           <>
-            {/* Feeding Trend */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={[styles.iconBadge, { backgroundColor: theme.colors.mint + '20' }]}>
-                  <MaterialCommunityIcons name="bottle-soda" size={20} color={theme.colors.mint} />
+            <View style={styles.grid}>
+              <TouchableOpacity
+                style={styles.tile}
+                onPress={() => router.push('/insights/sleep')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.tileLabel}>Average sleep</Text>
+                <Text style={styles.tileValue}>{formatHoursMinutes(averageSleepMinutes)}</Text>
+                <View style={styles.tileBarTrack}>
+                  <View style={[styles.tileBarFill, { width: '70%', backgroundColor: theme.colors.purple }]} />
                 </View>
-                <View style={styles.sectionInfo}>
-                  <Text style={styles.sectionTitle}>Feeding</Text>
-                  <Text style={styles.sectionAverage}>
-                    Average: {feedingAverage} feeds/day
-                  </Text>
+              </TouchableOpacity>
+
+              <View style={styles.tile}>
+                <Text style={styles.tileLabel}>Feeds / day</Text>
+                <Text style={styles.tileValue}>{feedsPerDay}</Text>
+                <View style={styles.tileBarTrack}>
+                  <View style={[styles.tileBarFill, { width: '65%', backgroundColor: theme.colors.teal }]} />
                 </View>
               </View>
-              <BarChart
-                data={feedingTrend}
-                color={theme.colors.mint}
-                height={220}
-              />
+
+              <View style={styles.tile}>
+                <Text style={styles.tileLabel}>Avg bottle</Text>
+                <Text style={styles.tileValue}>{avgBottleMl != null ? `${avgBottleMl} ml` : '--'}</Text>
+                <View style={styles.tileBarTrack}>
+                  <View style={[styles.tileBarFill, { width: '55%', backgroundColor: theme.colors.teal }]} />
+                </View>
+              </View>
+
+              <View style={styles.tile}>
+                <Text style={styles.tileLabel}>Nappies / day</Text>
+                <Text style={styles.tileValue}>{nappiesPerDay}</Text>
+                <View style={styles.tileBarTrack}>
+                  <View style={[styles.tileBarFill, { width: '60%', backgroundColor: theme.colors.orange }]} />
+                </View>
+              </View>
+
+              <View style={styles.tile}>
+                <Text style={styles.tileLabel}>Tummy time</Text>
+                <Text style={styles.tileValue}>{tummyMinutesPerDay}m</Text>
+                <View style={styles.tileBarTrack}>
+                  <View style={[styles.tileBarFill, { width: '40%', backgroundColor: theme.colors.yellowAccent }]} />
+                </View>
+              </View>
+
+              <View style={styles.tile}>
+                <Text style={styles.tileLabel}>Weight change</Text>
+                <Text style={styles.tileValue}>
+                  {weightChangeKgPerWeek != null
+                    ? `${weightChangeKgPerWeek >= 0 ? '+' : ''}${weightChangeKgPerWeek}kg/wk`
+                    : '--'}
+                </Text>
+                <View style={styles.tileBarTrack}>
+                  <View style={[styles.tileBarFill, { width: '50%', backgroundColor: theme.colors.success }]} />
+                </View>
+              </View>
             </View>
 
-            {/* Sleep Trend */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={[styles.iconBadge, { backgroundColor: theme.colors.lavender + '20' }]}>
-                  <MaterialCommunityIcons name="sleep" size={20} color={theme.colors.lavender} />
-                </View>
-                <View style={styles.sectionInfo}>
-                  <Text style={styles.sectionTitle}>Sleep Duration</Text>
-                  <Text style={styles.sectionAverage}>
-                    Average: {sleepAverage} hours/day
-                  </Text>
-                </View>
+            {sleepInsight && (
+              <View style={styles.insightBanner}>
+                <Text style={styles.insightPeriod}>{periodLabel}</Text>
+                <Text style={styles.insightText}>{sleepInsight}</Text>
+                <Text style={styles.insightSubtext}>Based on your logged data only.</Text>
               </View>
-              <LineChart
-                data={sleepTrend}
-                color={theme.colors.lavender}
-                height={220}
-              />
-            </View>
-
-            {/* Nappy Trend */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <View style={[styles.iconBadge, { backgroundColor: theme.colors.peach + '20' }]}>
-                  <MaterialCommunityIcons name="water" size={20} color={theme.colors.peach} />
-                </View>
-                <View style={styles.sectionInfo}>
-                  <Text style={styles.sectionTitle}>Nappy Changes</Text>
-                  <Text style={styles.sectionAverage}>
-                    Average: {nappyAverage} per day
-                  </Text>
-                </View>
-              </View>
-              <BarChart
-                data={nappyTrend}
-                color={theme.colors.peach}
-                height={220}
-              />
-            </View>
-
-            {/* Summary Stats */}
-            <View style={styles.summaryContainer}>
-              <Text style={styles.summaryTitle}>Summary</Text>
-              <View style={styles.statsGrid}>
-                <View style={styles.statCard}>
-                  <Text style={styles.statLabel}>Avg Feeds</Text>
-                  <Text style={styles.statValue}>{feedingAverage}</Text>
-                  <Text style={styles.statUnit}>per day</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statLabel}>Avg Sleep</Text>
-                  <Text style={styles.statValue}>{sleepAverage}h</Text>
-                  <Text style={styles.statUnit}>per day</Text>
-                </View>
-                <View style={styles.statCard}>
-                  <Text style={styles.statLabel}>Avg Nappies</Text>
-                  <Text style={styles.statValue}>{nappyAverage}</Text>
-                  <Text style={styles.statUnit}>per day</Text>
-                </View>
-              </View>
-            </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -148,114 +137,100 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
-  },
-  header: {
-    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700' as const,
+    fontSize: theme.typography.screenTitle.fontSize,
+    fontWeight: theme.typography.screenTitle.fontWeight,
     color: theme.colors.text,
-  },
-  subtitle: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
-  },
-  timeRangeContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
     marginBottom: theme.spacing.lg,
   },
-  timeRangeButton: {
+  rangeRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
+  },
+  rangePill: {
     flex: 1,
     paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.button,
+    borderRadius: 20,
+    alignItems: 'center',
+    backgroundColor: theme.colors.white,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    alignItems: 'center',
   },
-  timeRangeButtonActive: {
-    backgroundColor: theme.colors.teal,
-    borderColor: theme.colors.teal,
+  rangePillActive: {
+    backgroundColor: theme.colors.mint,
+    borderColor: theme.colors.mint,
   },
-  timeRangeText: {
-    fontSize: 14,
+  rangePillText: {
+    fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: '600' as const,
     color: theme.colors.textSecondary,
   },
-  timeRangeTextActive: {
-    color: theme.colors.white,
+  rangePillTextActive: {
+    color: theme.colors.teal,
   },
   loadingContainer: {
     marginTop: theme.spacing.xl,
     alignItems: 'center',
   },
-  section: {
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.md,
     marginBottom: theme.spacing.lg,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  iconBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
-  sectionInfo: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.cardHeadline.fontSize,
-    fontWeight: '600' as const,
-    color: theme.colors.text,
-  },
-  sectionAverage: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  summaryContainer: {
-    marginBottom: theme.spacing.xl,
-  },
-  summaryTitle: {
-    fontSize: theme.typography.cardHeadline.fontSize,
-    fontWeight: '600' as const,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  statCard: {
-    flex: 1,
+  tile: {
+    width: '47%',
     backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.card,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-    ...theme.shadows.small,
+    borderRadius: theme.borderRadius.input,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
   },
-  statLabel: {
-    fontSize: 12,
+  tileLabel: {
+    fontSize: theme.typography.metadata.fontSize,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
-  statValue: {
-    fontSize: 20,
+  tileValue: {
+    fontSize: theme.typography.cardHeadline.fontSize,
     fontWeight: '700' as const,
     color: theme.colors.text,
+    marginBottom: theme.spacing.md,
   },
-  statUnit: {
-    fontSize: 11,
+  tileBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.colors.background,
+    overflow: 'hidden',
+  },
+  tileBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  insightBanner: {
+    backgroundColor: theme.colors.mint,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.xxl,
+  },
+  insightPeriod: {
+    fontSize: theme.typography.metadata.fontSize,
+    fontWeight: '700' as const,
+    color: theme.colors.teal,
+    marginBottom: theme.spacing.sm,
+  },
+  insightText: {
+    fontSize: theme.typography.cardHeadline.fontSize,
+    fontWeight: '700' as const,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  insightSubtext: {
+    fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
   },
 });

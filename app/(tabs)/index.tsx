@@ -93,6 +93,7 @@ export default function HomeScreen() {
             backgroundColor="#EEE8FF"
             accentColor="#8A73D6"
             onPress={() => currentSleep ? router.push('/sleep/add') : latestSleep ? router.push(`/sleep/${latestSleep.id}`) : router.push('/sleep/add')}
+            onIconPress={() => router.push('/insights/sleep')}
           />
 
           <TrackingStatusCard
