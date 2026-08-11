@@ -34,7 +34,11 @@ export default function AddNappyScreen() {
 
   async function saveNappy(type: NappyType) {
     if (!baby) {
-      Alert.alert('Error', 'No baby selected');
+      Alert.alert(
+        'No Baby Profile',
+        'Please create a baby profile first in your settings.',
+        [{ text: 'OK', onPress: () => router.push('/profile') }]
+      );
       return;
     }
 

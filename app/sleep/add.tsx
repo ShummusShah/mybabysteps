@@ -44,7 +44,11 @@ export default function AddSleepScreen() {
 
   async function handleStartSleep() {
     if (!baby) {
-      Alert.alert('Error', 'No baby selected');
+      Alert.alert(
+        'No Baby Profile',
+        'Please create a baby profile first in your settings.',
+        [{ text: 'OK', onPress: () => router.push('/profile') }]
+      );
       return;
     }
 
@@ -98,7 +102,11 @@ export default function AddSleepScreen() {
 
   async function handleManualEntry() {
     if (!baby) {
-      Alert.alert('Error', 'No baby selected');
+      Alert.alert(
+        'No Baby Profile',
+        'Please create a baby profile first in your settings.',
+        [{ text: 'OK', onPress: () => router.push('/profile') }]
+      );
       return;
     }
 

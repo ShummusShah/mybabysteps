@@ -58,7 +58,7 @@ export function useBaby() {
     if (babies.length > 0 && !currentBabyId) {
       setCurrentBabyId(babies[0].id);
     }
-  }, [babies, currentBabyId]);
+  }, [babies, currentBabyId, setCurrentBabyId]);
 
   const createBaby = async (
     babyData: Omit<Baby, 'id' | 'household_id' | 'created_at' | 'updated_at'>

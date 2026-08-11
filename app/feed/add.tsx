@@ -51,7 +51,11 @@ export default function AddFeedScreen() {
 
   async function onSubmit(data: FeedFormData) {
     if (!baby) {
-      Alert.alert('Error', 'No baby selected');
+      Alert.alert(
+        'No Baby Profile',
+        'Please create a baby profile first in your settings.',
+        [{ text: 'OK', onPress: () => router.push('/profile') }]
+      );
       return;
     }
 
