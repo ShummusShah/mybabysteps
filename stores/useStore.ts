@@ -1,23 +1,5 @@
 import { create } from 'zustand';
-
-// Simple memory storage for Expo Go
-const memoryStorage = {
-  data: {} as Record<string, string>,
-
-  getItem: (key: string) => {
-    return Promise.resolve(memoryStorage.data[key] || null);
-  },
-
-  setItem: (key: string, value: string) => {
-    memoryStorage.data[key] = value;
-    return Promise.resolve();
-  },
-
-  removeItem: (key: string) => {
-    delete memoryStorage.data[key];
-    return Promise.resolve();
-  },
-};
+import memoryStorage from 'expo-sqlite/kv-store';
 
 interface QuickLogModule {
   type:
