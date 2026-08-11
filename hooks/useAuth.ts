@@ -7,11 +7,13 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<any>(null);
+  const [hasBaby, setHasBaby] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
   const isSignedIn = !!session;
   const inAuthGroup = segments[0] === 'auth';
+  const inOnboardingGroup = segments[0] === 'onboarding';
 
   useEffect(() => {
     let mounted = true;
@@ -71,20 +73,50 @@ export function useAuth() {
 
       if (error) throw error;
       setProfile(data);
+
+      // Check if user has a baby
+      const { data: householdMembers } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId);
+
+      if (householdMembers && householdMembers.length > 0) {
+        const householdIds = householdMembers.map((m) => m.household_id);
+        const { data: babies } = await supabase
+          .from('babies')
+          .select('id')
+          .in('household_id', householdIds);
+
+        setHasBaby((babies && babies.length > 0) || false);
+      } else {
+        setHasBaby(false);
+      }
     } catch (error) {
       console.error('Profile fetch error:', error);
+      setHasBaby(false);
     }
   }
 
   useEffect(() => {
     if (loading) return;
 
-    if (isSignedIn && inAuthGroup) {
-      router.replace('/' as any);
+    if (isSignedIn) {
+      if (inAuthGroup) {
+        // User signed in but still in auth group, redirect out
+        if (hasBaby) {
+          router.replace('/' as any);
+        } else {
+          router.replace('/onboarding' as any);
+        }
+      } else if (!inOnboardingGroup && !hasBaby) {
+        // User signed in with no baby, need onboarding
+        router.replace('/onboarding' as any);
+      }
     } else if (!isSignedIn && !inAuthGroup) {
+      // User not signed in, go to auth
       router.replace('/auth' as any);
     }
-  }, [isSignedIn, loading, inAuthGroup]);
+  }, [isSignedIn, loading, inAuthGroup, inOnboardingGroup, hasBaby]);
 
   async function signUpWithEmail(email: string, password: string, displayName: string) {
     try {
