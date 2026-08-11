@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -23,6 +24,7 @@ import { useStore } from '@/stores/useStore';
 
 export default function AddSleepScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { activeTimer, setActiveTimer } = useStore();
 
@@ -136,6 +138,11 @@ export default function AddSleepScreen() {
       });
 
       if (error) throw error;
+
+      // Invalidate queries to update UI live
+      queryClient.invalidateQueries({ queryKey: ['sleep_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       Alert.alert('Success', 'Sleep logged successfully!', [
         {

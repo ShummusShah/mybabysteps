@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -22,6 +23,7 @@ import { useStore } from '@/stores/useStore';
 
 export default function AddTummyTimeScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { activeTimer, setActiveTimer } = useStore();
 
@@ -116,6 +118,11 @@ export default function AddTummyTimeScreen() {
       });
 
       if (error) throw error;
+
+      // Invalidate queries to update UI live
+      queryClient.invalidateQueries({ queryKey: ['tummy_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       Alert.alert('Success', 'Tummy time logged!', [
         {

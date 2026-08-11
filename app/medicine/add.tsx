@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -21,6 +22,7 @@ import { formatTime } from '@/lib/utils/dateUtils';
 
 export default function AddMedicineScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
 
   const [medicineName, setMedicineName] = useState('');
@@ -62,6 +64,11 @@ export default function AddMedicineScreen() {
       });
 
       if (error) throw error;
+
+      // Invalidate queries to update UI live
+      queryClient.invalidateQueries({ queryKey: ['medicine_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       Alert.alert('Success', '💊 Medicine logged!', [
         {

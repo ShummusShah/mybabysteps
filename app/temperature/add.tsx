@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -22,6 +23,7 @@ import { useStore } from '@/stores/useStore';
 
 export default function AddTemperatureScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { userPreferences } = useStore();
 
@@ -71,6 +73,11 @@ export default function AddTemperatureScreen() {
       });
 
       if (error) throw error;
+
+      // Invalidate queries to update UI live
+      queryClient.invalidateQueries({ queryKey: ['temperature_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       Alert.alert('Success', '🌡️ Temperature logged!', [
         {

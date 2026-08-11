@@ -9,6 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -24,6 +25,7 @@ type NappyConsistency = 'loose' | 'soft' | 'formed' | 'hard' | 'other' | null;
 
 export default function AddNappyScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
   const [selectedType, setSelectedType] = useState<NappyType | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -64,6 +66,11 @@ export default function AddNappyScreen() {
       });
 
       if (error) throw error;
+
+      // Invalidate queries to update UI live
+      queryClient.invalidateQueries({ queryKey: ['nappy_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       Alert.alert('Success', '💩 Nappy logged!', [
         {

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { SegmentedControl } from '@react-native-segmented-control/segmented-control';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -36,6 +37,7 @@ type FeedFormData = z.infer<typeof feedSchema>;
 
 export default function AddFeedScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { userPreferences } = useStore();
   const [feedType, setFeedType] = useState(0); // 0=breast, 1=bottle, 2=pump
@@ -96,6 +98,11 @@ export default function AddFeedScreen() {
       });
 
       if (error) throw error;
+
+      // Invalidate queries to update UI live
+      queryClient.invalidateQueries({ queryKey: ['feeding_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       Alert.alert('Success', 'Feed logged successfully!', [
         {
