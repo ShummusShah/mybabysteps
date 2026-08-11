@@ -89,25 +89,29 @@ export function useBaby() {
       } else {
         console.log('No household found, creating one...');
 
-        // Ensure profile exists before creating household
-        let profile = await supabase
+        // Ensure profile exists before creating household - use upsert to handle existing accounts
+        const displayNameFromEmail = user.email?.split('@')[0] || 'User';
+        console.log('Creating or updating profile for user:', user.id);
+
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('display_name')
-          .eq('id', user.id);
+          .upsert(
+            {
+              id: user.id,
+              email: user.email,
+              display_name: displayNameFromEmail,
+            },
+            { onConflict: 'id' }
+          )
+          .select()
+          .single();
 
-        let displayName = profile.data?.[0]?.display_name;
-
-        if (!displayName) {
-          console.log('Profile not found, creating profile...');
-          // Create profile if it doesn't exist
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            display_name: user.email?.split('@')[0] || 'User',
-          });
-          displayName = user.email?.split('@')[0] || 'User';
+        if (profileError) {
+          console.error('Profile upsert error:', profileError);
+          throw profileError;
         }
 
+        const displayName = profileData?.display_name || displayNameFromEmail;
         const householdName = `${displayName}'s Household`;
 
         console.log('Creating household with name:', householdName);
