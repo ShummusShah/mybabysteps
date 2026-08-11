@@ -70,18 +70,54 @@ export function useBaby() {
 
       if (!user) throw new Error('No user logged in');
 
+      let householdId: string;
+
+      // Check if user has a household
       const { data: householdMembers } = await supabase
         .from('household_members')
         .select('household_id')
-        .eq('user_id', user.id)
-        .single();
+        .eq('user_id', user.id);
 
-      if (!householdMembers) throw new Error('No household found');
+      if (householdMembers && householdMembers.length > 0) {
+        householdId = householdMembers[0].household_id;
+      } else {
+        // Create household if it doesn't exist
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', user.id)
+          .single();
+
+        const householdName = profile?.display_name ? `${profile.display_name}'s Household` : 'My Household';
+
+        const { data: householdData, error: householdError } = await supabase
+          .from('households')
+          .insert({
+            name: householdName,
+          })
+          .select()
+          .single();
+
+        if (householdError) throw householdError;
+
+        // Add user to household
+        const { error: memberError } = await supabase
+          .from('household_members')
+          .insert({
+            household_id: householdData.id,
+            user_id: user.id,
+            role: 'admin',
+          });
+
+        if (memberError) throw memberError;
+
+        householdId = householdData.id;
+      }
 
       const { data, error } = await supabase
         .from('babies')
         .insert({
-          household_id: householdMembers.household_id,
+          household_id: householdId,
           ...babyData,
         })
         .select()
