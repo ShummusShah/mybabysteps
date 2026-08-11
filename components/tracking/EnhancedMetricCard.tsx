@@ -31,7 +31,7 @@ export function EnhancedMetricCard({
     <TouchableOpacity style={[styles.card, { borderLeftColor: color }]} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-          <MaterialCommunityIcons name={icon} size={24} color={color} />
+          <MaterialCommunityIcons name={icon as any} size={24} color={color} />
         </View>
         <Text style={styles.title}>{title}</Text>
       </View>
@@ -44,7 +44,7 @@ export function EnhancedMetricCard({
 
         <View style={styles.trendContainer}>
           <View style={styles.trendBadge}>
-            <MaterialCommunityIcons name={trendIcon} size={16} color={trendColor} />
+            <MaterialCommunityIcons name={trendIcon as any} size={16} color={trendColor} />
             <Text style={[styles.trendText, { color: trendColor }]}>
               {trendLabel}{Math.abs(trends.percentChange)}%
             </Text>

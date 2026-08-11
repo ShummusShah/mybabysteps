@@ -21,10 +21,10 @@ export interface DashboardTrends {
 export function useDashboardTrends(): DashboardTrends {
   const { baby } = useBaby();
 
-  const { data: feeds = { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same' as const, percentChange: 0 }, isLoading: feedsLoading } = useQuery({
+  const { data: feeds = { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same', percentChange: 0 } as TrendMetrics, isLoading: feedsLoading } = useQuery({
     queryKey: ['dashboard-trends-feeds', baby?.id],
     queryFn: async () => {
-      if (!baby) return { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same' as const, percentChange: 0 };
+      if (!baby) return { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same', percentChange: 0 } as TrendMetrics;
 
       const now = new Date();
       const today = new Date(now);
@@ -88,10 +88,10 @@ export function useDashboardTrends(): DashboardTrends {
     enabled: !!baby,
   });
 
-  const { data: sleepMinutes = { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same' as const, percentChange: 0 }, isLoading: sleepLoading } = useQuery({
+  const { data: sleepMinutes = { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same', percentChange: 0 } as TrendMetrics, isLoading: sleepLoading } = useQuery({
     queryKey: ['dashboard-trends-sleep', baby?.id],
     queryFn: async () => {
-      if (!baby) return { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same' as const, percentChange: 0 };
+      if (!baby) return { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same', percentChange: 0 } as TrendMetrics;
 
       const now = new Date();
       const today = new Date(now);
@@ -163,10 +163,10 @@ export function useDashboardTrends(): DashboardTrends {
     enabled: !!baby,
   });
 
-  const { data: nappies = { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same' as const, percentChange: 0 }, isLoading: nappiesLoading } = useQuery({
+  const { data: nappies = { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same', percentChange: 0 } as TrendMetrics, isLoading: nappiesLoading } = useQuery({
     queryKey: ['dashboard-trends-nappies', baby?.id],
     queryFn: async () => {
-      if (!baby) return { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same' as const, percentChange: 0 };
+      if (!baby) return { today: 0, yesterday: 0, thisWeek: 0, lastWeek: 0, trend: 'same', percentChange: 0 } as TrendMetrics;
 
       const now = new Date();
       const today = new Date(now);
@@ -231,9 +231,9 @@ export function useDashboardTrends(): DashboardTrends {
   });
 
   return {
-    feeds,
-    sleepMinutes,
-    nappies,
+    feeds: feeds as TrendMetrics,
+    sleepMinutes: sleepMinutes as TrendMetrics,
+    nappies: nappies as TrendMetrics,
     isLoading: feedsLoading || sleepLoading || nappiesLoading,
   };
 }

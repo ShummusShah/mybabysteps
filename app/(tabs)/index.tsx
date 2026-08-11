@@ -13,8 +13,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBaby } from '@/hooks/useBaby';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboardTrends } from '@/hooks/useDashboardTrends';
 import { useAuth } from '@/hooks/useAuth';
 import { TrackingCard } from '@/components/tracking/TrackingCard';
+import { EnhancedMetricCard } from '@/components/tracking/EnhancedMetricCard';
 import { theme } from '@/constants/theme';
 import {
   formatElapsedTime,
@@ -41,6 +43,7 @@ export default function HomeScreen() {
     todayNappies,
     isLoading,
   } = useDashboard();
+  const { feeds, sleepMinutes, nappies, isLoading: trendsLoading } = useDashboardTrends();
   const { userPreferences } = useStore();
   const [timeline, setTimeline] = useState<any[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
@@ -167,63 +170,36 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Tracking Cards */}
+        {/* Enhanced Tracking Cards with Trends */}
         <View style={styles.cardsSection}>
-          <TrackingCard
-            type="feed"
+          <EnhancedMetricCard
             title="Feeding"
-            primaryMetric={
-              latestFeed
-                ? `${formatElapsedTime(Date.now() - new Date(latestFeed.start_time).getTime())} ago`
-                : 'No feeds yet'
-            }
-            secondaryMetrics={[
-              {
-                label: 'Today',
-                value: `${todayFeeds.length} feeds`,
-              },
-            ]}
+            primaryValue={`${feeds.today}`}
+            primaryLabel="feeds today"
+            trends={feeds}
             icon="bottle-soda"
-            onPress={() => latestFeed ? router.push(`/feed/${latestFeed.id}`) : router.push('/feed/add')}
+            color={theme.colors.mint}
+            onPress={() => router.push('/feed/add')}
           />
 
-          <TrackingCard
-            type="sleep"
+          <EnhancedMetricCard
             title="Sleep"
-            primaryMetric={
-              currentSleep
-                ? `Sleeping for ${formatDuration(Math.floor((Date.now() - new Date(currentSleep.start_time).getTime()) / 1000))}`
-                : latestSleep
-                  ? `${formatElapsedTime(Date.now() - new Date(latestSleep.end_time || new Date()).getTime())} ago`
-                  : 'No sleeps yet'
-            }
-            secondaryMetrics={[
-              {
-                label: 'Today',
-                value: formatDuration(todaySleep),
-              },
-            ]}
+            primaryValue={`${Math.floor(sleepMinutes.today / 60)}h ${sleepMinutes.today % 60}m`}
+            primaryLabel="sleep today"
+            trends={sleepMinutes}
             icon="sleep"
-            onPress={() => currentSleep ? router.push(`/sleep/${currentSleep.id}`) : latestSleep ? router.push(`/sleep/${latestSleep.id}`) : router.push('/sleep/add')}
-            isActive={!!currentSleep}
+            color={theme.colors.lavender}
+            onPress={() => router.push('/sleep/add')}
           />
 
-          <TrackingCard
-            type="nappy"
+          <EnhancedMetricCard
             title="Nappies"
-            primaryMetric={
-              latestNappy
-                ? `${formatElapsedTime(Date.now() - new Date(latestNappy.logged_at).getTime())} ago · ${latestNappy.type === 'both' ? 'Wet + dirty' : latestNappy.type.charAt(0).toUpperCase() + latestNappy.type.slice(1)}`
-                : 'No nappies yet'
-            }
-            secondaryMetrics={[
-              {
-                label: 'Today',
-                value: `${todayNappies}`,
-              },
-            ]}
+            primaryValue={`${nappies.today}`}
+            primaryLabel="nappies today"
+            trends={nappies}
             icon="water"
-            onPress={() => latestNappy ? router.push(`/nappy/${latestNappy.id}`) : router.push('/nappy/add')}
+            color={theme.colors.peach}
+            onPress={() => router.push('/nappy/add')}
           />
         </View>
 
