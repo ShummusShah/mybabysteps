@@ -1,0 +1,82 @@
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ScreenContainer } from '@/components/ui/ScreenContainer';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { theme } from '@/constants/theme';
+
+export default function WelcomeScreen() {
+  const router = useRouter();
+
+  return (
+    <ScreenContainer>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.headerSection}>
+            <Text style={styles.emoji}>👶</Text>
+            <Text style={styles.title}>MyBabySteps</Text>
+            <Text style={styles.subtitle}>Everything about your little one, in one place</Text>
+          </View>
+
+          <View style={styles.spacer} />
+
+          <View style={styles.buttonContainer}>
+            <PrimaryButton
+              title="Get Started"
+              onPress={() => router.push('/auth/signup')}
+              style={styles.button}
+            />
+
+            <PrimaryButton
+              title="I already have an account"
+              onPress={() => router.push('/auth/login')}
+              variant="secondary"
+              style={styles.button}
+            />
+          </View>
+        </View>
+      </View>
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingBottom: theme.spacing.xl,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  headerSection: {
+    alignItems: 'center',
+    paddingTop: theme.spacing.xxl * 2,
+  },
+  emoji: {
+    fontSize: 80,
+    marginBottom: theme.spacing.xl,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700' as const,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+  },
+  subtitle: {
+    fontSize: theme.typography.cardHeadline.fontSize,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  spacer: {
+    flex: 1,
+  },
+  buttonContainer: {
+    gap: theme.spacing.md,
+  },
+  button: {
+    width: '100%',
+  },
+});

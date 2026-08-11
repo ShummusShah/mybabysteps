@@ -1,0 +1,161 @@
+import { create } from 'zustand';
+
+// Simple memory storage for Expo Go
+const memoryStorage = {
+  data: {} as Record<string, string>,
+
+  getItem: (key: string) => {
+    return Promise.resolve(memoryStorage.data[key] || null);
+  },
+
+  setItem: (key: string, value: string) => {
+    memoryStorage.data[key] = value;
+    return Promise.resolve();
+  },
+
+  removeItem: (key: string) => {
+    delete memoryStorage.data[key];
+    return Promise.resolve();
+  },
+};
+
+interface QuickLogModule {
+  type:
+    | 'feed'
+    | 'sleep'
+    | 'nappy'
+    | 'pump'
+    | 'tummy'
+    | 'medicine'
+    | 'temperature'
+    | 'growth'
+    | 'milestone'
+    | 'photo';
+  enabled: boolean;
+  order: number;
+}
+
+interface ActiveTimer {
+  type: 'feed' | 'sleep' | 'tummy';
+  startedAt: number;
+  babyId: string;
+  metadata?: Record<string, any>;
+}
+
+interface StoreState {
+  currentBabyId: string | null;
+  setCurrentBabyId: (id: string) => void;
+
+  activeTimer: ActiveTimer | null;
+  setActiveTimer: (timer: ActiveTimer | null) => void;
+
+  quickLogModules: QuickLogModule[];
+  setQuickLogModules: (modules: QuickLogModule[]) => void;
+
+  userPreferences: {
+    weightUnit: 'kg' | 'lb';
+    milkUnit: 'ml' | 'fl_oz';
+    temperatureUnit: 'celsius' | 'fahrenheit';
+    timeFormat: '12h' | '24h';
+    startOfWeek: 'monday' | 'sunday';
+    theme: 'light' | 'dark' | 'system';
+  };
+  setUserPreferences: (prefs: Partial<StoreState['userPreferences']>) => void;
+
+  lastFeedTime: number | null;
+  setLastFeedTime: (time: number | null) => void;
+
+  initializeFromStorage: () => Promise<void>;
+}
+
+export const useStore = create<StoreState>((set) => ({
+  currentBabyId: null,
+  setCurrentBabyId: (id: string) => {
+    memoryStorage.setItem('currentBabyId', id);
+    set({ currentBabyId: id });
+  },
+
+  activeTimer: null,
+  setActiveTimer: (timer: ActiveTimer | null) => {
+    if (timer) {
+      memoryStorage.setItem('activeTimer', JSON.stringify(timer));
+    } else {
+      memoryStorage.removeItem('activeTimer');
+    }
+    set({ activeTimer: timer });
+  },
+
+  quickLogModules: [
+    { type: 'feed', enabled: true, order: 0 },
+    { type: 'sleep', enabled: true, order: 1 },
+    { type: 'nappy', enabled: true, order: 2 },
+    { type: 'tummy', enabled: true, order: 3 },
+    { type: 'pump', enabled: true, order: 4 },
+    { type: 'medicine', enabled: true, order: 5 },
+    { type: 'temperature', enabled: true, order: 6 },
+    { type: 'growth', enabled: true, order: 7 },
+    { type: 'milestone', enabled: true, order: 8 },
+    { type: 'photo', enabled: true, order: 9 },
+  ],
+  setQuickLogModules: (modules: QuickLogModule[]) => {
+    memoryStorage.setItem('quickLogModules', JSON.stringify(modules));
+    set({ quickLogModules: modules });
+  },
+
+  userPreferences: {
+    weightUnit: 'kg',
+    milkUnit: 'ml',
+    temperatureUnit: 'celsius',
+    timeFormat: '24h',
+    startOfWeek: 'monday',
+    theme: 'system',
+  },
+  setUserPreferences: (prefs: Partial<StoreState['userPreferences']>) => {
+    set((state) => {
+      const newPrefs = { ...state.userPreferences, ...prefs };
+      memoryStorage.setItem('userPreferences', JSON.stringify(newPrefs));
+      return { userPreferences: newPrefs };
+    });
+  },
+
+  lastFeedTime: null,
+  setLastFeedTime: (time: number | null) => {
+    if (time) {
+      memoryStorage.setItem('lastFeedTime', time.toString());
+    } else {
+      memoryStorage.removeItem('lastFeedTime');
+    }
+    set({ lastFeedTime: time });
+  },
+
+  initializeFromStorage: async () => {
+    try {
+      const [babyId, timerStr, modulesStr, prefsStr, feedTimeStr] = await Promise.all([
+        memoryStorage.getItem('currentBabyId'),
+        memoryStorage.getItem('activeTimer'),
+        memoryStorage.getItem('quickLogModules'),
+        memoryStorage.getItem('userPreferences'),
+        memoryStorage.getItem('lastFeedTime'),
+      ]);
+
+      set({
+        currentBabyId: babyId || null,
+        activeTimer: timerStr ? JSON.parse(timerStr) : null,
+        quickLogModules: modulesStr ? JSON.parse(modulesStr) : [],
+        userPreferences: prefsStr
+          ? JSON.parse(prefsStr)
+          : {
+              weightUnit: 'kg',
+              milkUnit: 'ml',
+              temperatureUnit: 'celsius',
+              timeFormat: '24h',
+              startOfWeek: 'monday',
+              theme: 'system',
+            },
+        lastFeedTime: feedTimeStr ? parseInt(feedTimeStr) : null,
+      });
+    } catch (error) {
+      console.error('Failed to initialize store:', error);
+    }
+  },
+}));
