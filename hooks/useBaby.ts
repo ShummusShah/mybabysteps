@@ -70,25 +70,34 @@ export function useBaby() {
 
       if (!user) throw new Error('No user logged in');
 
+      console.log('Creating baby for user:', user.id);
       let householdId: string;
 
       // Check if user has a household
-      const { data: householdMembers } = await supabase
+      const { data: householdMembers, error: memberError } = await supabase
         .from('household_members')
         .select('household_id')
         .eq('user_id', user.id);
 
+      if (memberError) {
+        console.error('Error fetching household members:', memberError);
+      }
+
       if (householdMembers && householdMembers.length > 0) {
         householdId = householdMembers[0].household_id;
+        console.log('Found existing household:', householdId);
       } else {
+        console.log('No household found, creating one...');
         // Create household if it doesn't exist
         const { data: profile } = await supabase
           .from('profiles')
           .select('display_name')
-          .eq('id', user.id)
-          .single();
+          .eq('id', user.id);
 
-        const householdName = profile?.display_name ? `${profile.display_name}'s Household` : 'My Household';
+        const displayName = profile?.[0]?.display_name || 'User';
+        const householdName = `${displayName}'s Household`;
+
+        console.log('Creating household with name:', householdName);
 
         const { data: householdData, error: householdError } = await supabase
           .from('households')
@@ -98,10 +107,15 @@ export function useBaby() {
           .select()
           .single();
 
-        if (householdError) throw householdError;
+        if (householdError) {
+          console.error('Household creation error:', householdError);
+          throw householdError;
+        }
+
+        console.log('Created household:', householdData.id);
 
         // Add user to household
-        const { error: memberError } = await supabase
+        const { error: memberInsertError } = await supabase
           .from('household_members')
           .insert({
             household_id: householdData.id,
@@ -109,10 +123,15 @@ export function useBaby() {
             role: 'admin',
           });
 
-        if (memberError) throw memberError;
+        if (memberInsertError) {
+          console.error('Household member insertion error:', memberInsertError);
+          throw memberInsertError;
+        }
 
         householdId = householdData.id;
       }
+
+      console.log('Creating baby with household:', householdId, 'data:', babyData);
 
       const { data, error } = await supabase
         .from('babies')
@@ -123,13 +142,19 @@ export function useBaby() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Baby insertion error:', error);
+        throw error;
+      }
+
+      console.log('Baby created successfully:', data.id);
 
       queryClient.invalidateQueries({ queryKey: ['babies'] });
       setCurrentBabyId(data.id);
 
       return { data, error: null };
     } catch (error) {
+      console.error('createBaby error:', error);
       return { data: null, error };
     }
   };

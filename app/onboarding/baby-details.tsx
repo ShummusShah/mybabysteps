@@ -92,13 +92,16 @@ export default function BabyDetailsScreen() {
       });
 
       if (error) {
-        Alert.alert('Error', 'Failed to create baby profile');
+        const errorMessage = (error as any)?.message || JSON.stringify(error);
+        console.error('Baby creation error:', error);
+        Alert.alert('Error', `Failed to create baby profile: ${errorMessage}`);
         return;
       }
 
       router.push('/onboarding/units');
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      console.error('Unexpected error:', error);
+      Alert.alert('Error', `An unexpected error occurred: ${(error as any)?.message}`);
     } finally {
       setLoading(false);
     }
