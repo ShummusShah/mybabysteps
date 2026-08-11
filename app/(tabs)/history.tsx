@@ -29,7 +29,7 @@ interface LogEntry {
   timestamp: string;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   data: any;
 }
 
@@ -69,14 +69,14 @@ export default function HistoryScreen() {
           .from('medicine_logs')
           .select('*')
           .eq('baby_id', baby.id)
-          .gte('logged_at', sevenDaysAgo.toISOString())
-          .order('logged_at', { ascending: false }),
+          .gte('given_at', sevenDaysAgo.toISOString())
+          .order('given_at', { ascending: false }),
         supabase
           .from('temperature_logs')
           .select('*')
           .eq('baby_id', baby.id)
-          .gte('logged_at', sevenDaysAgo.toISOString())
-          .order('logged_at', { ascending: false }),
+          .gte('taken_at', sevenDaysAgo.toISOString())
+          .order('taken_at', { ascending: false }),
       ]);
 
       const items: LogEntry[] = [];
@@ -130,26 +130,27 @@ export default function HistoryScreen() {
         items.push({
           id: medicine.id,
           type: 'medicine',
-          timestamp: medicine.logged_at,
+          timestamp: medicine.given_at,
           title: 'Medicine',
-          subtitle: medicine.name,
+          subtitle: medicine.medicine_name,
           icon: 'pill',
           data: medicine,
         });
       });
 
       (temperatures.data || []).forEach((temperature) => {
-        const displayTemp =
-          temperature.unit === 'celsius'
-            ? `${temperature.temperature_celsius}°C`
-            : `${Math.round((temperature.temperature_celsius * 9/5) + 32)}°F`;
+        const displayTemp = `${temperature.temperature.toFixed(1)}°${temperature.unit}`;
+        const isFever =
+          temperature.unit === 'C'
+            ? temperature.temperature >= 38
+            : temperature.temperature >= 100.4;
         items.push({
           id: temperature.id,
           type: 'temperature',
-          timestamp: temperature.logged_at,
+          timestamp: temperature.taken_at,
           title: 'Temperature',
           subtitle: displayTemp,
-          icon: temperature.temperature_celsius >= 38 ? 'thermometer-alert' : 'thermometer',
+          icon: isFever ? 'thermometer-alert' : 'thermometer',
           data: temperature,
         });
       });
@@ -161,7 +162,7 @@ export default function HistoryScreen() {
     enabled: !!baby,
   });
 
-  const groupedLogs = logs ? groupByDate(logs, (log) => log.timestamp) : {};
+  const groupedLogs = logs ? groupByDate(logs, 'timestamp') : {};
 
   const handleNavigate = (item: LogEntry) => {
     if (item.type === 'feed') router.push(`/feed/${item.id}`);

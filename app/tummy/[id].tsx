@@ -158,7 +158,7 @@ export default function TummyTimeDetailScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <MaterialCommunityIcons
-                  name="hourglass-end"
+                  name="timer-sand"
                   size={20}
                   color={theme.colors.teal}
                 />

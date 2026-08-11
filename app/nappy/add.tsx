@@ -105,28 +105,28 @@ export default function AddNappyScreen() {
   const nappyOptions = [
     {
       type: 'wet' as const,
-      icon: 'water-circle',
+      icon: 'water-circle' as const,
       label: 'Wet',
       colour: theme.colors.mint,
       description: 'Wet nappy',
     },
     {
       type: 'dirty' as const,
-      icon: 'cloud-circle',
+      icon: 'cloud-circle' as const,
       label: 'Dirty',
       colour: theme.colors.peach,
       description: 'Dirty nappy',
     },
     {
       type: 'both' as const,
-      icon: 'checkbox-multiple-marked-circle',
+      icon: 'checkbox-multiple-marked-circle' as const,
       label: 'Both',
       colour: theme.colors.yellow,
       description: 'Wet & dirty',
     },
     {
       type: 'dry' as const,
-      icon: 'check-circle',
+      icon: 'check-circle' as const,
       label: 'Dry',
       colour: theme.colors.lavender,
       description: 'Dry nappy',

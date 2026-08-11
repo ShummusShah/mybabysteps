@@ -123,7 +123,7 @@ export default function SleepDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MaterialCommunityIcons
-              name={log.sleep_type === 'night' ? 'moon' : 'cloud-sun'}
+              name={log.sleep_type === 'night' ? 'weather-night' : 'weather-partly-cloudy'}
               size={20}
               color={theme.colors.teal}
             />
@@ -166,7 +166,7 @@ export default function SleepDetailScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <MaterialCommunityIcons
-                  name="hourglass-end"
+                  name="timer-sand"
                   size={20}
                   color={theme.colors.teal}
                 />
