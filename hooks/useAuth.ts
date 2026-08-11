@@ -68,11 +68,37 @@ export function useAuth() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
-      if (error) throw error;
-      setProfile(data);
+      let profileData = data?.[0];
+
+      // If profile doesn't exist, create it from auth user
+      if (!profileData || (error && error.code === 'PGRST116')) {
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
+        if (authUser) {
+          await supabase.from('profiles').insert({
+            id: userId,
+            email: authUser.email,
+            display_name: authUser.user_metadata?.display_name || authUser.email?.split('@')[0] || 'User',
+          });
+
+          // Fetch the newly created profile
+          const { data: newProfileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+          profileData = newProfileData;
+        }
+      }
+
+      if (profileData) {
+        setProfile(profileData);
+      }
 
       // Check if user has a baby
       const { data: householdMembers } = await supabase
