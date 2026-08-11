@@ -172,7 +172,7 @@ export default function AddNappyScreen() {
           ))}
         </View>
 
-        <View style={styles.hint Container}>
+        <View style={styles.hintContainer}>
           <MaterialCommunityIcons
             name="lightbulb-outline"
             size={16}
