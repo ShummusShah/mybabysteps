@@ -59,6 +59,7 @@ export function useMilestones() {
     if (error) throw error;
 
     queryClient.invalidateQueries({ queryKey: ['milestones', baby.id] });
+    queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
     return data as Milestone;
   };
 
@@ -66,6 +67,7 @@ export function useMilestones() {
     const { error } = await supabase.from('milestones').delete().eq('id', id);
     if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ['milestones', baby?.id] });
+    queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
   };
 
   const achievedCount = milestones.filter((m) => m.achieved).length;

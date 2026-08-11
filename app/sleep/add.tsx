@@ -145,6 +145,7 @@ export default function AddSleepScreen() {
       queryClient.invalidateQueries({ queryKey: ['sleep_logs'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', 'Sleep logged successfully!', [
         {

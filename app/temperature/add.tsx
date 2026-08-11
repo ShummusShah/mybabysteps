@@ -79,6 +79,7 @@ export default function AddTemperatureScreen() {
       queryClient.invalidateQueries({ queryKey: ['temperature_logs'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', '🌡️ Temperature logged!', [
         {

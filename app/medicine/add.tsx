@@ -70,6 +70,7 @@ export default function AddMedicineScreen() {
       queryClient.invalidateQueries({ queryKey: ['medicine_logs'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', '💊 Medicine logged!', [
         {

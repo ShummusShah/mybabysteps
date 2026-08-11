@@ -118,6 +118,7 @@ export default function AddFeedScreen() {
       queryClient.invalidateQueries({ queryKey: ['feeding_logs'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', 'Feed logged successfully!', [
         {

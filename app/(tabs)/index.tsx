@@ -121,6 +121,11 @@ export default function HomeScreen() {
             if (item.type === 'feed') router.push(`/feed/${item.rawData.id}`);
             else if (item.type === 'sleep') router.push(`/sleep/${item.rawData.id}`);
             else if (item.type === 'nappy') router.push(`/nappy/${item.rawData.id}`);
+            else if (item.type === 'tummy') router.push(`/tummy/${item.rawData.id}`);
+            else if (item.type === 'medicine') router.push(`/medicine/${item.rawData.id}`);
+            else if (item.type === 'temperature') router.push(`/temperature/${item.rawData.id}`);
+            else if (item.type === 'milestone') router.push(`/milestones/${item.rawData.id}`);
+            // growth and photo have no detail screen yet
           }}
         />
       </ScrollView>

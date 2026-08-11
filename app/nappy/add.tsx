@@ -72,6 +72,7 @@ export default function AddNappyScreen() {
       queryClient.invalidateQueries({ queryKey: ['nappy_logs'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', '💩 Nappy logged!', [
         {

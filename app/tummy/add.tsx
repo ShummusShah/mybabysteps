@@ -125,6 +125,7 @@ export default function AddTummyTimeScreen() {
       queryClient.invalidateQueries({ queryKey: ['tummy_logs'] });
       queryClient.invalidateQueries({ queryKey: ['history'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', 'Tummy time logged!', [
         {

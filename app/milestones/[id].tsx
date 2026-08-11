@@ -47,6 +47,7 @@ export default function MilestoneDetailScreen() {
             if (error) throw error;
 
             queryClient.invalidateQueries({ queryKey: ['milestones'] });
+            queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
             safeBack(router, '/milestones');
           } catch (error) {
             Alert.alert('Error', (error as any)?.message || 'Failed to delete');

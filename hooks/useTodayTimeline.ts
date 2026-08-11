@@ -7,7 +7,7 @@ import { formatMilk } from '@/lib/utils/unitConversion';
 
 export interface TimelineItem {
   id: string;
-  type: 'feed' | 'sleep' | 'nappy';
+  type: 'feed' | 'sleep' | 'nappy' | 'tummy' | 'medicine' | 'temperature' | 'growth' | 'milestone' | 'photo';
   timestamp: string;
   title: string;
   subtitle: string;
@@ -28,7 +28,7 @@ export function useTodayTimeline() {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const [feeds, sleeps, nappies] = await Promise.all([
+      const [feeds, sleeps, nappies, tummyTimes, medicines, temperatures, growths, milestones, photos] = await Promise.all([
         supabase
           .from('feeding_logs')
           .select('*')
@@ -45,6 +45,48 @@ export function useTodayTimeline() {
           .order('start_time', { ascending: false }),
         supabase
           .from('nappy_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('logged_at', today.toISOString())
+          .lt('logged_at', tomorrow.toISOString())
+          .order('logged_at', { ascending: false }),
+        supabase
+          .from('tummy_time_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('start_time', today.toISOString())
+          .lt('start_time', tomorrow.toISOString())
+          .order('start_time', { ascending: false }),
+        supabase
+          .from('medicine_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('given_at', today.toISOString())
+          .lt('given_at', tomorrow.toISOString())
+          .order('given_at', { ascending: false }),
+        supabase
+          .from('temperature_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('taken_at', today.toISOString())
+          .lt('taken_at', tomorrow.toISOString())
+          .order('taken_at', { ascending: false }),
+        supabase
+          .from('growth_logs')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('measured_at', today.toISOString())
+          .lt('measured_at', tomorrow.toISOString())
+          .order('measured_at', { ascending: false }),
+        supabase
+          .from('milestones')
+          .select('*')
+          .eq('baby_id', baby.id)
+          .gte('achieved_at', today.toISOString())
+          .lt('achieved_at', tomorrow.toISOString())
+          .order('achieved_at', { ascending: false }),
+        supabase
+          .from('photos')
           .select('*')
           .eq('baby_id', baby.id)
           .gte('logged_at', today.toISOString())
@@ -87,6 +129,78 @@ export function useTodayTimeline() {
           title: `${typeLabel} nappy`,
           subtitle: '',
           rawData: nappy,
+        });
+      });
+
+      (tummyTimes.data || []).forEach((tummy) => {
+        const endTime = tummy.end_time ? new Date(tummy.end_time).getTime() : Date.now();
+        const duration = Math.floor((endTime - new Date(tummy.start_time).getTime()) / 1000);
+        items.push({
+          id: tummy.id,
+          type: 'tummy',
+          timestamp: tummy.start_time,
+          title: 'Tummy Time',
+          subtitle: tummy.end_time ? formatDuration(duration) : 'In progress',
+          rawData: tummy,
+        });
+      });
+
+      (medicines.data || []).forEach((medicine) => {
+        items.push({
+          id: medicine.id,
+          type: 'medicine',
+          timestamp: medicine.given_at,
+          title: medicine.medicine_name,
+          subtitle: medicine.dosage || '',
+          rawData: medicine,
+        });
+      });
+
+      (temperatures.data || []).forEach((temperature) => {
+        items.push({
+          id: temperature.id,
+          type: 'temperature',
+          timestamp: temperature.taken_at,
+          title: 'Temperature',
+          subtitle: `${temperature.temperature.toFixed(1)}°${temperature.unit}`,
+          rawData: temperature,
+        });
+      });
+
+      (growths.data || []).forEach((growth) => {
+        const parts: string[] = [];
+        if (growth.weight != null) parts.push(`${growth.weight}${growth.weight_unit || ''}`);
+        if (growth.height != null) parts.push(`${growth.height}${growth.height_unit || ''}`);
+        if (growth.head_circumference != null) parts.push(`Head ${growth.head_circumference}cm`);
+        items.push({
+          id: growth.id,
+          type: 'growth',
+          timestamp: growth.measured_at,
+          title: 'Growth',
+          subtitle: parts.join(' · '),
+          rawData: growth,
+        });
+      });
+
+      (milestones.data || []).forEach((milestone) => {
+        items.push({
+          id: milestone.id,
+          type: 'milestone',
+          timestamp: milestone.achieved_at,
+          title: milestone.title,
+          subtitle: 'Milestone',
+          rawData: milestone,
+        });
+      });
+
+      (photos.data || []).forEach((photo) => {
+        items.push({
+          id: photo.id,
+          type: 'photo',
+          timestamp: photo.logged_at,
+          title: 'Photo',
+          subtitle: photo.caption || '',
+          rawData: photo,
         });
       });
 

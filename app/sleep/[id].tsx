@@ -70,6 +70,7 @@ export default function SleepDetailScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['sleep'] });
+            queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
             Alert.alert('Deleted', 'Sleep log removed', [
               {

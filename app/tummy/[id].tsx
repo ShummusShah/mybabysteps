@@ -68,6 +68,7 @@ export default function TummyTimeDetailScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['tummy'] });
+            queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
             Alert.alert('Deleted', 'Tummy time log removed', [
               {

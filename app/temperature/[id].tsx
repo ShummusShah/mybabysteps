@@ -56,6 +56,7 @@ export default function TemperatureDetailsScreen() {
 
             queryClient.invalidateQueries({ queryKey: ['temperature_logs'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
             Alert.alert('Success', 'Temperature log deleted', [
               {

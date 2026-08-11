@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
@@ -23,6 +24,7 @@ import { useStore } from '@/stores/useStore';
 
 export default function AddGrowthScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { baby } = useBaby();
   const { userPreferences } = useStore();
 
@@ -69,6 +71,11 @@ export default function AddGrowthScreen() {
       });
 
       if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['growth_logs'] });
+      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 
       Alert.alert('Success', '📏 Growth measurement logged!', [
         {

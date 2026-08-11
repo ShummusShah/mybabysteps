@@ -88,6 +88,7 @@ export function usePhotos() {
     if (error) throw error;
 
     queryClient.invalidateQueries({ queryKey: ['photos', baby.id] });
+    queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
     return data as PhotoLog;
   };
 
@@ -107,6 +108,7 @@ export function usePhotos() {
     }
 
     queryClient.invalidateQueries({ queryKey: ['photos', baby?.id] });
+    queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
   };
 
   return {
