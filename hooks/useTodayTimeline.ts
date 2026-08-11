@@ -205,7 +205,7 @@ export function useTodayTimeline() {
       });
 
       items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      return items.slice(0, 5);
+      return items;
     },
     enabled: !!baby,
   });
