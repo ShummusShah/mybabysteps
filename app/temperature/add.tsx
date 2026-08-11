@@ -18,6 +18,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime } from '@/lib/utils/dateUtils';
 import { useStore } from '@/stores/useStore';
 
@@ -82,7 +83,7 @@ export default function AddTemperatureScreen() {
       Alert.alert('Success', '🌡️ Temperature logged!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -94,7 +95,7 @@ export default function AddTemperatureScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Temperature" leftAction={() => router.back()} />
+      <Header title="Log Temperature" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.label}>Temperature *</Text>

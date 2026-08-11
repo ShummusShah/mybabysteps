@@ -18,6 +18,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { usePhotos } from '@/hooks/usePhotos';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { PhotoLog } from '@/types';
 
@@ -58,7 +59,7 @@ export default function PhotosScreen() {
       <Header
         title="Photos"
         subtitle={`${photos.length} photo${photos.length === 1 ? '' : 's'}`}
-        leftAction={() => router.back()}
+        leftAction={() => safeBack(router, '/(tabs)')}
         rightAction={() => router.push('/photos/add')}
         rightLabel="Add"
       />

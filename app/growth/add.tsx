@@ -17,6 +17,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime } from '@/lib/utils/dateUtils';
 import { useStore } from '@/stores/useStore';
 
@@ -72,7 +73,7 @@ export default function AddGrowthScreen() {
       Alert.alert('Success', '📏 Growth measurement logged!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -84,7 +85,7 @@ export default function AddGrowthScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Growth" leftAction={() => router.back()} />
+      <Header title="Log Growth" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Measurements</Text>

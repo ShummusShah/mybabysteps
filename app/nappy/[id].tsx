@@ -14,6 +14,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime } from '@/lib/utils/dateUtils';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -48,7 +49,7 @@ export default function NappyDetailScreen() {
       setLog(data);
     } catch (error) {
       Alert.alert('Error', 'Failed to load nappy details');
-      router.back();
+      safeBack(router, '/(tabs)');
     } finally {
       setLoading(false);
     }
@@ -75,7 +76,7 @@ export default function NappyDetailScreen() {
             Alert.alert('Deleted', 'Nappy log removed', [
               {
                 text: 'OK',
-                onPress: () => router.back(),
+                onPress: () => safeBack(router, '/(tabs)'),
               },
             ]);
           } catch (error) {
@@ -92,7 +93,7 @@ export default function NappyDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <Header title="Nappy Details" leftAction={() => router.back()} />
+        <Header title="Nappy Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.teal} />
         </View>
@@ -103,7 +104,7 @@ export default function NappyDetailScreen() {
   if (!log) {
     return (
       <ScreenContainer>
-        <Header title="Nappy Details" leftAction={() => router.back()} />
+        <Header title="Nappy Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>Nappy log not found</Text>
         </View>
@@ -138,7 +139,7 @@ export default function NappyDetailScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Nappy Details" leftAction={() => router.back()} />
+      <Header title="Nappy Details" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Type */}

@@ -20,6 +20,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatDuration, formatTime } from '@/lib/utils/dateUtils';
 import { useStore } from '@/stores/useStore';
 
@@ -93,7 +94,7 @@ export default function AddSleepScreen() {
       Alert.alert('Sleep Started', `Baby is ${detectedSleepType === 'night' ? 'sleeping for the night' : 'napping'}`, [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -148,7 +149,7 @@ export default function AddSleepScreen() {
       Alert.alert('Success', 'Sleep logged successfully!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -160,7 +161,7 @@ export default function AddSleepScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Sleep" leftAction={() => router.back()} />
+      <Header title="Log Sleep" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Mode Selection */}

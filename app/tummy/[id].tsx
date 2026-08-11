@@ -14,6 +14,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime, formatDuration } from '@/lib/utils/dateUtils';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -44,7 +45,7 @@ export default function TummyTimeDetailScreen() {
       setLog(data);
     } catch (error) {
       Alert.alert('Error', 'Failed to load tummy time details');
-      router.back();
+      safeBack(router, '/(tabs)');
     } finally {
       setLoading(false);
     }
@@ -71,7 +72,7 @@ export default function TummyTimeDetailScreen() {
             Alert.alert('Deleted', 'Tummy time log removed', [
               {
                 text: 'OK',
-                onPress: () => router.back(),
+                onPress: () => safeBack(router, '/(tabs)'),
               },
             ]);
           } catch (error) {
@@ -88,7 +89,7 @@ export default function TummyTimeDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <Header title="Tummy Time Details" leftAction={() => router.back()} />
+        <Header title="Tummy Time Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.teal} />
         </View>
@@ -99,7 +100,7 @@ export default function TummyTimeDetailScreen() {
   if (!log) {
     return (
       <ScreenContainer>
-        <Header title="Tummy Time Details" leftAction={() => router.back()} />
+        <Header title="Tummy Time Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>Tummy time log not found</Text>
         </View>
@@ -114,7 +115,7 @@ export default function TummyTimeDetailScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Tummy Time Details" leftAction={() => router.back()} />
+      <Header title="Tummy Time Details" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Activity Icon */}

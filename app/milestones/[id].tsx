@@ -8,6 +8,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { Milestone } from '@/types';
 
@@ -46,7 +47,7 @@ export default function MilestoneDetailScreen() {
             if (error) throw error;
 
             queryClient.invalidateQueries({ queryKey: ['milestones'] });
-            router.back();
+            safeBack(router, '/milestones');
           } catch (error) {
             Alert.alert('Error', (error as any)?.message || 'Failed to delete');
           } finally {
@@ -60,7 +61,7 @@ export default function MilestoneDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <Header title="Milestone" leftAction={() => router.back()} />
+        <Header title="Milestone" leftAction={() => safeBack(router, '/milestones')} />
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.teal} />
         </View>
@@ -71,7 +72,7 @@ export default function MilestoneDetailScreen() {
   if (!milestone) {
     return (
       <ScreenContainer>
-        <Header title="Milestone" leftAction={() => router.back()} />
+        <Header title="Milestone" leftAction={() => safeBack(router, '/milestones')} />
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>Milestone not found</Text>
         </View>
@@ -81,7 +82,7 @@ export default function MilestoneDetailScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Milestone" leftAction={() => router.back()} />
+      <Header title="Milestone" leftAction={() => safeBack(router, '/milestones')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.heroSection}>

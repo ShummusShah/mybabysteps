@@ -7,6 +7,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Header } from '@/components/ui/Header';
 import { useStore } from '@/stores/useStore';
 import { theme, trackingCardStyles } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 type TrackingModule = 'feeding' | 'sleep' | 'nappies' | 'pumping' | 'tummy_time' | 'medicine' | 'temperature' | 'growth' | 'milestones' | 'photos';
 
@@ -52,7 +53,7 @@ export default function TrackingPreferencesScreen() {
 
   return (
     <ScreenContainer>
-      <Header leftAction={() => router.back()} title="What to Track" />
+      <Header leftAction={() => safeBack(router, '/onboarding/units')} title="What to Track" />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.description}>

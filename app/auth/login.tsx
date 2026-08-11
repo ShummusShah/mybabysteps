@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Header } from '@/components/ui/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -49,7 +50,7 @@ export default function LoginScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header leftAction={() => router.back()} title="Log In" />
+      <Header leftAction={() => safeBack(router, '/auth/welcome')} title="Log In" />
 
       <View style={styles.form}>
         <Controller

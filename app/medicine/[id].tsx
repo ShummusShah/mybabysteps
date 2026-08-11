@@ -15,6 +15,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime } from '@/lib/utils/dateUtils';
 
 export default function MedicineDetailsScreen() {
@@ -59,7 +60,7 @@ export default function MedicineDetailsScreen() {
             Alert.alert('Success', 'Medicine log deleted', [
               {
                 text: 'OK',
-                onPress: () => router.back(),
+                onPress: () => safeBack(router, '/(tabs)'),
               },
             ]);
           } catch (error) {
@@ -76,7 +77,7 @@ export default function MedicineDetailsScreen() {
   if (!medicineLog) {
     return (
       <ScreenContainer>
-        <Header title="Medicine Log" leftAction={() => router.back()} />
+        <Header title="Medicine Log" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Loading...</Text>
         </View>
@@ -88,7 +89,7 @@ export default function MedicineDetailsScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Medicine Log" leftAction={() => router.back()} />
+      <Header title="Medicine Log" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.card}>

@@ -7,6 +7,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useHousehold } from '@/hooks/useHousehold';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 type InviteRole = 'parent' | 'caregiver' | 'viewer';
 
@@ -36,7 +37,7 @@ export default function InviteCaregiverScreen() {
       Alert.alert(
         'Invite Sent',
         `${trimmedEmail} will see this invite when they open MyBabySteps and check Caregivers.`,
-        [{ text: 'Done', onPress: () => router.back() }]
+        [{ text: 'Done', onPress: () => safeBack(router, '/caregivers') }]
       );
     } catch (error) {
       Alert.alert('Error', (error as any)?.message || 'Failed to send invite');
@@ -47,7 +48,7 @@ export default function InviteCaregiverScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Invite Caregiver" leftAction={() => router.back()} />
+      <Header title="Invite Caregiver" leftAction={() => safeBack(router, '/caregivers')} />
 
       <View style={styles.content}>
         <Text style={styles.label}>Email address</Text>

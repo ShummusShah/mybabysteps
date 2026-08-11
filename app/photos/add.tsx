@@ -10,6 +10,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { usePhotos } from '@/hooks/usePhotos';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 export default function AddPhotoScreen() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function AddPhotoScreen() {
     setUploading(true);
     try {
       await uploadPhoto(asset.uri, asset.mimeType, caption.trim() || undefined);
-      router.back();
+      safeBack(router, '/photos');
     } catch (error) {
       Alert.alert('Error', (error as any)?.message || 'Failed to upload photo');
     } finally {
@@ -59,7 +60,7 @@ export default function AddPhotoScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Add Photo" leftAction={() => router.back()} />
+      <Header title="Add Photo" leftAction={() => safeBack(router, '/photos')} />
 
       <View style={styles.content}>
         <TouchableOpacity

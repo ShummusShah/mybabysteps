@@ -22,6 +22,7 @@ import { useStore } from '@/stores/useStore';
 import { useBaby } from '@/hooks/useBaby';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const babyDetailsSchema = z.object({
@@ -109,7 +110,7 @@ export default function BabyDetailsScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header leftAction={() => router.back()} title="Baby Details" />
+      <Header leftAction={() => safeBack(router, '/onboarding/welcome')} title="Baby Details" />
 
       <View style={styles.form}>
         <View style={styles.avatarSection}>

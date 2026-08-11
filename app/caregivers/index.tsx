@@ -15,6 +15,7 @@ import { Header } from '@/components/ui/Header';
 import { useHousehold, HouseholdInvite } from '@/hooks/useHousehold';
 import { useAuth } from '@/hooks/useAuth';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner',
@@ -107,7 +108,7 @@ export default function CaregiversScreen() {
     <ScreenContainer>
       <Header
         title="Caregivers"
-        leftAction={() => router.back()}
+        leftAction={() => safeBack(router, '/(tabs)/profile')}
         rightAction={() => router.push('/caregivers/invite')}
         rightLabel="Invite"
       />

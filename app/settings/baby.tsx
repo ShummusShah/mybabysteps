@@ -16,6 +16,7 @@ import { useBaby } from '@/hooks/useBaby';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 export default function BabySettingsScreen() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function BabySettingsScreen() {
 
       queryClient.invalidateQueries({ queryKey: ['baby'] });
       Alert.alert('Success', 'Baby profile updated');
-      router.back();
+      safeBack(router, '/settings');
     } catch (error) {
       Alert.alert('Error', 'Failed to update baby profile');
       console.error(error);
@@ -64,7 +65,7 @@ export default function BabySettingsScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => safeBack(router, '/settings')}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Baby Profile</Text>

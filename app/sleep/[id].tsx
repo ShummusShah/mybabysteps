@@ -16,6 +16,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime, formatDuration, formatElapsedTime } from '@/lib/utils/dateUtils';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -46,7 +47,7 @@ export default function SleepDetailScreen() {
       setLog(data);
     } catch (error) {
       Alert.alert('Error', 'Failed to load sleep details');
-      router.back();
+      safeBack(router, '/(tabs)');
     } finally {
       setLoading(false);
     }
@@ -73,7 +74,7 @@ export default function SleepDetailScreen() {
             Alert.alert('Deleted', 'Sleep log removed', [
               {
                 text: 'OK',
-                onPress: () => router.back(),
+                onPress: () => safeBack(router, '/(tabs)'),
               },
             ]);
           } catch (error) {
@@ -90,7 +91,7 @@ export default function SleepDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <Header title="Sleep Details" leftAction={() => router.back()} />
+        <Header title="Sleep Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.teal} />
         </View>
@@ -101,7 +102,7 @@ export default function SleepDetailScreen() {
   if (!log) {
     return (
       <ScreenContainer>
-        <Header title="Sleep Details" leftAction={() => router.back()} />
+        <Header title="Sleep Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>Sleep log not found</Text>
         </View>
@@ -116,7 +117,7 @@ export default function SleepDetailScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Sleep Details" leftAction={() => router.back()} />
+      <Header title="Sleep Details" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Sleep Type */}

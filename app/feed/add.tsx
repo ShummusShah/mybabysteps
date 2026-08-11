@@ -21,6 +21,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { flOzToMl } from '@/lib/utils/unitConversion';
 import { useStore } from '@/stores/useStore';
 
@@ -121,7 +122,7 @@ export default function AddFeedScreen() {
       Alert.alert('Success', 'Feed logged successfully!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -135,7 +136,7 @@ export default function AddFeedScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Feed" leftAction={() => router.back()} />
+      <Header title="Log Feed" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Feed Type Selection */}

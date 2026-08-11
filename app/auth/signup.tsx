@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Header } from '@/components/ui/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 const signupSchema = z
   .object({
@@ -60,7 +61,7 @@ export default function SignupScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header leftAction={() => router.back()} title="Create Account" />
+      <Header leftAction={() => safeBack(router, '/auth/welcome')} title="Create Account" />
 
       <View style={styles.form}>
         <Controller

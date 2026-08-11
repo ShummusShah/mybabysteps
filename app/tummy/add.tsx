@@ -19,6 +19,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime, formatDuration } from '@/lib/utils/dateUtils';
 import { useStore } from '@/stores/useStore';
 
@@ -78,7 +79,7 @@ export default function AddTummyTimeScreen() {
       Alert.alert('Tummy Time Started', 'Baby is having tummy time!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -128,7 +129,7 @@ export default function AddTummyTimeScreen() {
       Alert.alert('Success', 'Tummy time logged!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -140,7 +141,7 @@ export default function AddTummyTimeScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Tummy Time" leftAction={() => router.back()} />
+      <Header title="Log Tummy Time" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>

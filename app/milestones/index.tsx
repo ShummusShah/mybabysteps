@@ -6,6 +6,7 @@ import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
 import { useMilestones } from '@/hooks/useMilestones';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatDate } from '@/lib/utils/dateUtils';
 
 export default function MilestonesScreen() {
@@ -17,7 +18,7 @@ export default function MilestonesScreen() {
       <Header
         title="Milestones"
         subtitle={`${achievedCount} achieved`}
-        leftAction={() => router.back()}
+        leftAction={() => safeBack(router, '/(tabs)')}
         rightAction={() => router.push('/milestones/add')}
         rightLabel="Add"
       />

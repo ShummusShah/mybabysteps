@@ -14,6 +14,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useMilestones } from '@/hooks/useMilestones';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 const COMMON_MILESTONES = [
   'First smile',
@@ -49,7 +50,7 @@ export default function AddMilestoneScreen() {
         notes: notes.trim() || undefined,
         isCustom: !selectedTitle,
       });
-      router.back();
+      safeBack(router, '/milestones');
     } catch (error) {
       Alert.alert('Error', (error as any)?.message || 'Failed to save milestone');
     } finally {
@@ -59,7 +60,7 @@ export default function AddMilestoneScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Add Milestone" leftAction={() => router.back()} />
+      <Header title="Add Milestone" leftAction={() => safeBack(router, '/milestones')} />
 
       <View style={styles.content}>
         <Text style={styles.label}>Quick add</Text>

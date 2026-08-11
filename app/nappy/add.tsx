@@ -18,6 +18,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 type NappyType = 'wet' | 'dirty' | 'both' | 'dry';
 type NappyColour = 'yellow' | 'brown' | 'green' | 'black' | 'other' | null;
@@ -75,7 +76,7 @@ export default function AddNappyScreen() {
       Alert.alert('Success', '💩 Nappy logged!', [
         {
           text: 'Done',
-          onPress: () => router.back(),
+          onPress: () => safeBack(router, '/(tabs)'),
         },
       ]);
     } catch (error) {
@@ -151,7 +152,7 @@ export default function AddNappyScreen() {
 
   return (
     <ScreenContainer>
-      <Header title="Log Nappy" leftAction={() => router.back()} />
+      <Header title="Log Nappy" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.instruction}>What type of nappy?</Text>

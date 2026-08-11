@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Header } from '@/components/ui/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -50,7 +51,7 @@ export default function ForgotPasswordScreen() {
   if (submitted) {
     return (
       <ScreenContainer>
-        <Header leftAction={() => router.back()} />
+        <Header leftAction={() => safeBack(router, '/auth/welcome')} />
         <View style={styles.successContainer}>
           <Text style={styles.successEmoji}>✉️</Text>
           <Text style={styles.successTitle}>Check your email</Text>
@@ -69,7 +70,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header leftAction={() => router.back()} title="Reset Password" />
+      <Header leftAction={() => safeBack(router, '/auth/welcome')} title="Reset Password" />
 
       <View style={styles.form}>
         <Text style={styles.description}>

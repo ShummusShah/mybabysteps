@@ -6,6 +6,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Header } from '@/components/ui/Header';
 import { useStore } from '@/stores/useStore';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type Unit = 'kg' | 'lb' | 'ml' | 'fl_oz' | 'celsius' | 'fahrenheit';
@@ -35,7 +36,7 @@ export default function UnitsScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header leftAction={() => router.back()} title="Preferences" />
+      <Header leftAction={() => safeBack(router, '/onboarding/baby-details')} title="Preferences" />
 
       <View style={styles.content}>
         <View style={styles.section}>

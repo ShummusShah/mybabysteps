@@ -16,6 +16,7 @@ import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 import { formatTime, formatDuration } from '@/lib/utils/dateUtils';
 import { useStore } from '@/stores/useStore';
 import { useQueryClient } from '@tanstack/react-query';
@@ -49,7 +50,7 @@ export default function FeedDetailScreen() {
       setLog(data);
     } catch (error) {
       Alert.alert('Error', 'Failed to load feed details');
-      router.back();
+      safeBack(router, '/(tabs)');
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,7 @@ export default function FeedDetailScreen() {
             Alert.alert('Deleted', 'Feed log removed', [
               {
                 text: 'OK',
-                onPress: () => router.back(),
+                onPress: () => safeBack(router, '/(tabs)'),
               },
             ]);
           } catch (error) {
@@ -93,7 +94,7 @@ export default function FeedDetailScreen() {
   if (loading) {
     return (
       <ScreenContainer>
-        <Header title="Feed Details" leftAction={() => router.back()} />
+        <Header title="Feed Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.teal} />
         </View>
@@ -104,7 +105,7 @@ export default function FeedDetailScreen() {
   if (!log) {
     return (
       <ScreenContainer>
-        <Header title="Feed Details" leftAction={() => router.back()} />
+        <Header title="Feed Details" leftAction={() => safeBack(router, '/(tabs)')} />
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>Feed not found</Text>
         </View>
@@ -121,7 +122,7 @@ export default function FeedDetailScreen() {
     <ScreenContainer scrollable>
       <Header
         title="Feed Details"
-        leftAction={() => router.back()}
+        leftAction={() => safeBack(router, '/(tabs)')}
         rightAction={() => setIsEditing(!isEditing)}
         rightLabel={isEditing ? 'Cancel' : 'Edit'}
       />
