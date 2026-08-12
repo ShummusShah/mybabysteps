@@ -77,7 +77,7 @@ export default function AddTemperatureScreen() {
 
       // Invalidate queries to update UI live
       queryClient.invalidateQueries({ queryKey: ['temperature_logs'] });
-      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['log-entries'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 

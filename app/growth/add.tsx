@@ -73,7 +73,7 @@ export default function AddGrowthScreen() {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['growth_logs'] });
-      queryClient.invalidateQueries({ queryKey: ['history'] });
+      queryClient.invalidateQueries({ queryKey: ['log-entries'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
 

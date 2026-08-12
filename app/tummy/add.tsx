@@ -83,7 +83,7 @@ export default function AddTummyTimeScreen() {
   function invalidateTummyQueries() {
     queryClient.invalidateQueries({ queryKey: ['currentTummy', baby?.id] });
     queryClient.invalidateQueries({ queryKey: ['tummy_logs'] });
-    queryClient.invalidateQueries({ queryKey: ['history'] });
+    queryClient.invalidateQueries({ queryKey: ['log-entries'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
   }

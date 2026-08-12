@@ -110,7 +110,7 @@ export default function AddSleepScreen() {
     queryClient.invalidateQueries({ queryKey: ['todaySleep', baby?.id] });
     queryClient.invalidateQueries({ queryKey: ['latestSleep', baby?.id] });
     queryClient.invalidateQueries({ queryKey: ['sleep_logs'] });
-    queryClient.invalidateQueries({ queryKey: ['history'] });
+    queryClient.invalidateQueries({ queryKey: ['log-entries'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
   }

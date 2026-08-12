@@ -73,6 +73,7 @@ export default function NappyDetailScreen() {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['nappy'] });
             queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+            queryClient.invalidateQueries({ queryKey: ['log-entries'] });
 
             Alert.alert('Deleted', 'Nappy log removed', [
               {

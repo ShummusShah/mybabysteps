@@ -60,6 +60,7 @@ export function useMilestones() {
 
     queryClient.invalidateQueries({ queryKey: ['milestones', baby.id] });
     queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+    queryClient.invalidateQueries({ queryKey: ['log-entries'] });
     return data as Milestone;
   };
 
@@ -68,6 +69,7 @@ export function useMilestones() {
     if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ['milestones', baby?.id] });
     queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+    queryClient.invalidateQueries({ queryKey: ['log-entries'] });
   };
 
   const achievedCount = milestones.filter((m) => m.achieved).length;

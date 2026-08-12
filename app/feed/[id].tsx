@@ -74,6 +74,7 @@ export default function FeedDetailScreen() {
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['feeding'] });
             queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+            queryClient.invalidateQueries({ queryKey: ['log-entries'] });
 
             Alert.alert('Deleted', 'Feed log removed', [
               {

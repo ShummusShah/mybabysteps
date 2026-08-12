@@ -57,6 +57,7 @@ export default function MedicineDetailsScreen() {
             queryClient.invalidateQueries({ queryKey: ['medicine_logs'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['today-timeline'] });
+            queryClient.invalidateQueries({ queryKey: ['log-entries'] });
 
             Alert.alert('Success', 'Medicine log deleted', [
               {
