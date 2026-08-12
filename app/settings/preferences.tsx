@@ -9,7 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useStore } from '@/stores/useStore';
 import { theme } from '@/constants/theme';
@@ -38,11 +38,13 @@ interface UnitModalProps {
   currentValue: string;
   onSelect: (value: string) => void;
   onClose: () => void;
+  insetTop: number;
+  insetBottom: number;
 }
 
-const UnitModal = ({ visible, title, options, currentValue, onSelect, onClose }: UnitModalProps) => (
+const UnitModal = ({ visible, title, options, currentValue, onSelect, onClose, insetTop, insetBottom }: UnitModalProps) => (
   <Modal visible={visible} transparent animationType="slide">
-    <SafeAreaView style={styles.modalContainer}>
+    <View style={[styles.modalContainer, { paddingTop: insetTop, paddingBottom: insetBottom }]}>
       <View style={styles.modalHeader}>
         <TouchableOpacity onPress={onClose}>
           <Text style={styles.modalCloseText}>Close</Text>
@@ -66,15 +68,17 @@ const UnitModal = ({ visible, title, options, currentValue, onSelect, onClose }:
         )}
         style={styles.modalList}
       />
-    </SafeAreaView>
+    </View>
   </Modal>
 );
 
+type ModalKey = 'weight' | 'milk' | 'temperature' | 'timeFormat' | null;
+
 export default function PreferencesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { userPreferences, setUserPreferences } = useStore();
-  const [showUnitModal, setShowUnitModal] = useState(false);
-  const [showTimeFormatModal, setShowTimeFormatModal] = useState(false);
+  const [openModal, setOpenModal] = useState<ModalKey>(null);
 
   const weightUnits: PreferenceOption[] = [
     { label: 'Kilograms (kg)', value: 'kg' },
@@ -86,6 +90,16 @@ export default function PreferencesScreen() {
     { label: 'Fluid Ounces (fl oz)', value: 'fl_oz' },
   ];
 
+  const temperatureUnits: PreferenceOption[] = [
+    { label: 'Celsius (°C)', value: 'celsius' },
+    { label: 'Fahrenheit (°F)', value: 'fahrenheit' },
+  ];
+
+  const timeFormats: PreferenceOption[] = [
+    { label: '24-hour', value: '24h' },
+    { label: '12-hour (AM/PM)', value: '12h' },
+  ];
+
   const handleUnitChange = (key: string, value: string) => {
     setUserPreferences({ [key]: value as any });
   };
@@ -95,7 +109,7 @@ export default function PreferencesScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => safeBack(router, '/settings')}>
+          <TouchableOpacity onPress={() => safeBack(router, '/(tabs)/profile')}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Preferences</Text>
@@ -109,7 +123,7 @@ export default function PreferencesScreen() {
           {/* Weight */}
           <TouchableOpacity
             style={styles.preferenceItem}
-            onPress={() => setShowUnitModal(true)}
+            onPress={() => setOpenModal('weight')}
           >
             <View style={styles.preferenceLeft}>
               <MaterialCommunityIcons name="weight-kilogram" size={20} color={theme.colors.teal} />
@@ -126,7 +140,7 @@ export default function PreferencesScreen() {
           {/* Milk Volume */}
           <TouchableOpacity
             style={styles.preferenceItem}
-            onPress={() => setShowTimeFormatModal(true)}
+            onPress={() => setOpenModal('milk')}
           >
             <View style={styles.preferenceLeft}>
               <MaterialCommunityIcons name="water" size={20} color={theme.colors.mint} />
@@ -141,7 +155,10 @@ export default function PreferencesScreen() {
           </TouchableOpacity>
 
           {/* Temperature */}
-          <TouchableOpacity style={styles.preferenceItem}>
+          <TouchableOpacity
+            style={styles.preferenceItem}
+            onPress={() => setOpenModal('temperature')}
+          >
             <View style={styles.preferenceLeft}>
               <MaterialCommunityIcons name="thermometer" size={20} color={theme.colors.peach} />
               <View style={styles.preferenceInfo}>
@@ -160,27 +177,16 @@ export default function PreferencesScreen() {
           <Text style={styles.sectionTitle}>Time & Format</Text>
 
           {/* Time Format */}
-          <TouchableOpacity style={styles.preferenceItem}>
+          <TouchableOpacity
+            style={styles.preferenceItem}
+            onPress={() => setOpenModal('timeFormat')}
+          >
             <View style={styles.preferenceLeft}>
               <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.lavender} />
               <View style={styles.preferenceInfo}>
                 <Text style={styles.preferenceName}>Time Format</Text>
                 <Text style={styles.preferenceValue}>
                   {userPreferences.timeFormat === '12h' ? '12-hour (AM/PM)' : '24-hour'}
-                </Text>
-              </View>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-
-          {/* Week Start */}
-          <TouchableOpacity style={styles.preferenceItem}>
-            <View style={styles.preferenceLeft}>
-              <MaterialCommunityIcons name="calendar" size={20} color={theme.colors.teal} />
-              <View style={styles.preferenceInfo}>
-                <Text style={styles.preferenceName}>Week Starts On</Text>
-                <Text style={styles.preferenceValue}>
-                  {userPreferences.startOfWeek === 'monday' ? 'Monday' : 'Sunday'}
                 </Text>
               </View>
             </View>
@@ -210,21 +216,47 @@ export default function PreferencesScreen() {
 
       {/* Modals */}
       <UnitModal
-        visible={showUnitModal}
+        visible={openModal === 'weight'}
         title="Weight Unit"
         options={weightUnits}
         currentValue={userPreferences.weightUnit}
         onSelect={(value: string) => handleUnitChange('weightUnit', value)}
-        onClose={() => setShowUnitModal(false)}
+        onClose={() => setOpenModal(null)}
+        insetTop={insets.top}
+        insetBottom={insets.bottom}
       />
 
       <UnitModal
-        visible={showTimeFormatModal}
+        visible={openModal === 'milk'}
         title="Milk Volume Unit"
         options={milkUnits}
         currentValue={userPreferences.milkUnit}
         onSelect={(value: string) => handleUnitChange('milkUnit', value)}
-        onClose={() => setShowTimeFormatModal(false)}
+        onClose={() => setOpenModal(null)}
+        insetTop={insets.top}
+        insetBottom={insets.bottom}
+      />
+
+      <UnitModal
+        visible={openModal === 'temperature'}
+        title="Temperature Unit"
+        options={temperatureUnits}
+        currentValue={userPreferences.temperatureUnit}
+        onSelect={(value: string) => handleUnitChange('temperatureUnit', value)}
+        onClose={() => setOpenModal(null)}
+        insetTop={insets.top}
+        insetBottom={insets.bottom}
+      />
+
+      <UnitModal
+        visible={openModal === 'timeFormat'}
+        title="Time Format"
+        options={timeFormats}
+        currentValue={userPreferences.timeFormat}
+        onSelect={(value: string) => handleUnitChange('timeFormat', value)}
+        onClose={() => setOpenModal(null)}
+        insetTop={insets.top}
+        insetBottom={insets.bottom}
       />
     </SafeAreaView>
   );

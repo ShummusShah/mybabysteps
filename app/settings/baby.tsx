@@ -97,7 +97,7 @@ export default function BabySettingsScreen() {
       if (error) throw error;
 
       Alert.alert('Success', 'Baby profile updated', [
-        { text: 'OK', onPress: () => safeBack(router, '/settings') },
+        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to update baby profile');
@@ -108,7 +108,7 @@ export default function BabySettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header title="Baby Profile" leftLabel="‹" leftAction={() => safeBack(router, '/settings')} />
+      <Header title="Baby Profile" leftLabel="‹" leftAction={() => safeBack(router, '/(tabs)/profile')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.photoSection}>

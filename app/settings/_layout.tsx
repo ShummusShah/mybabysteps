@@ -10,7 +10,6 @@ export default function SettingsLayout() {
         contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Stack.Screen name="index" />
       <Stack.Screen name="baby" />
       <Stack.Screen name="preferences" />
     </Stack>
