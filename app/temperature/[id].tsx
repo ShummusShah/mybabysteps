@@ -120,6 +120,13 @@ export default function TemperatureDetailsScreen() {
             <Text style={styles.value}>°{temperatureLog.unit}</Text>
           </View>
 
+          {temperatureLog.measurement_location && (
+            <View style={styles.detail}>
+              <Text style={styles.label}>Measured at</Text>
+              <Text style={styles.value}>{temperatureLog.measurement_location}</Text>
+            </View>
+          )}
+
           {temperatureLog.notes && (
             <View style={styles.detail}>
               <Text style={styles.label}>Notes</Text>

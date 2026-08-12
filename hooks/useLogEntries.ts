@@ -170,7 +170,7 @@ export async function fetchLogEntries(
       type: 'temperature',
       timestamp: temperature.taken_at,
       title: 'Temperature',
-      subtitle: `${temperature.temperature.toFixed(1)}°${temperature.unit}`,
+      subtitle: `${temperature.temperature.toFixed(1)}°${temperature.unit}${temperature.measurement_location ? ` · ${temperature.measurement_location}` : ''}`,
       rawData: temperature,
     });
   });
