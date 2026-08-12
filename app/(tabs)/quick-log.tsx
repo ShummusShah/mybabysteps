@@ -87,7 +87,7 @@ export default function QuickLogScreen() {
                 <View style={styles.gridItemIcon}>
                   <MaterialCommunityIcons
                     name={iconMap[module.type] as any}
-                    size={36}
+                    size={26}
                     color={theme.colors.teal}
                   />
                 </View>
@@ -126,36 +126,36 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
   },
   subtitle: {
     fontSize: theme.typography.sectionTitle.fontSize,
     fontWeight: theme.typography.sectionTitle.fontWeight,
     color: theme.colors.text,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
     justifyContent: 'space-between',
   },
   gridItem: {
-    width: '48%',
-    aspectRatio: 1,
+    width: '31%',
+    aspectRatio: 1.05,
     backgroundColor: theme.colors.white,
     borderRadius: theme.borderRadius.card,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
   gridItemIcon: {
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   gridItemLabel: {
-    fontSize: theme.typography.body.fontSize,
+    fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: '600' as const,
     color: theme.colors.text,
     textAlign: 'center',
