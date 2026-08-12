@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
@@ -29,6 +30,7 @@ const tileSize = (screenWidth - theme.spacing.lg * 2 - GRID_GAP * (NUM_COLUMNS -
 
 export default function PhotosScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { photos, isLoading, deletePhoto } = usePhotos();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoLog | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -106,7 +108,7 @@ export default function PhotosScreen() {
       <Modal visible={!!selectedPhoto} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <TouchableOpacity
-            style={styles.modalClose}
+            style={[styles.modalClose, { top: insets.top + theme.spacing.md }]}
             onPress={() => setSelectedPhoto(null)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -209,7 +211,6 @@ const styles = StyleSheet.create({
   },
   modalClose: {
     position: 'absolute',
-    top: 60,
     right: theme.spacing.lg,
     zIndex: 1,
   },

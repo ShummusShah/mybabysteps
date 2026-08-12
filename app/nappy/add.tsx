@@ -7,11 +7,12 @@ import {
   ScrollView,
   Alert,
   Modal,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
@@ -27,6 +28,7 @@ type NappyConsistency = 'loose' | 'soft' | 'formed' | 'hard' | 'other' | null;
 export default function AddNappyScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const { baby } = useBaby();
   const [selectedType, setSelectedType] = useState<NappyType | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -204,7 +206,7 @@ export default function AddNappyScreen() {
         transparent={false}
         onRequestClose={() => setShowDetails(false)}
       >
-        <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.modalHeader}>
             <TouchableOpacity
               onPress={() => setShowDetails(false)}
@@ -280,15 +282,14 @@ export default function AddNappyScreen() {
             {/* Notes */}
             <View style={styles.detailSection}>
               <Text style={styles.detailLabel}>Notes (optional)</Text>
-              <TouchableOpacity
-                style={[styles.notesInput, notes && styles.notesInputActive]}
-              >
-                <Text
-                  style={notes ? styles.notesText : styles.notesPlaceholder}
-                >
-                  {notes || 'Any observations...'}
-                </Text>
-              </TouchableOpacity>
+              <TextInput
+                style={[styles.notesInput, notes && styles.notesInputActive, styles.notesText]}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Any observations..."
+                placeholderTextColor={theme.colors.textSecondary}
+                multiline
+              />
             </View>
 
             {/* Save Button */}
@@ -300,7 +301,7 @@ export default function AddNappyScreen() {
               style={styles.saveButton}
             />
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </Modal>
     </ScreenContainer>
   );
@@ -392,13 +393,13 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
   },
   detailSection: {
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
   },
   detailLabel: {
     fontSize: theme.typography.label.fontSize,
     fontWeight: theme.typography.label.fontWeight,
     color: theme.colors.text,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   optionGrid: {
     flexDirection: 'row',
@@ -406,10 +407,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   optionButton: {
-    flex: 1,
-    minWidth: '30%',
-    aspectRatio: 0.9,
-    paddingVertical: theme.spacing.md,
+    width: '31%',
+    aspectRatio: 1.3,
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
