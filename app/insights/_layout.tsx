@@ -12,6 +12,8 @@ export default function InsightsDetailLayout() {
     >
       <Stack.Screen name="sleep" />
       <Stack.Screen name="growth" />
+      <Stack.Screen name="feed" />
+      <Stack.Screen name="nappy" />
     </Stack>
   );
 }

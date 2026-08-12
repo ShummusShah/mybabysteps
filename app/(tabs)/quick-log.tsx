@@ -20,6 +20,19 @@ const iconMap: Record<string, string> = {
   photo: 'camera',
 };
 
+const typeColors: Record<string, { bg: string; accent: string }> = {
+  feed: { bg: theme.colors.mint, accent: theme.colors.teal },
+  sleep: { bg: theme.colors.lavender, accent: theme.colors.purple },
+  nappy: { bg: theme.colors.peach, accent: theme.colors.orange },
+  pump: { bg: theme.colors.pink, accent: theme.colors.pinkAccent },
+  tummy: { bg: theme.colors.yellow, accent: theme.colors.yellowAccent },
+  medicine: { bg: theme.colors.pink, accent: theme.colors.pinkAccent },
+  temperature: { bg: theme.colors.mint, accent: theme.colors.teal },
+  growth: { bg: theme.colors.lavender, accent: theme.colors.purple },
+  milestone: { bg: theme.colors.yellow, accent: theme.colors.yellowAccent },
+  photo: { bg: theme.colors.peach, accent: theme.colors.orange },
+};
+
 const routeMap: Record<string, string> = {
   feed: '/feed/add',
   sleep: '/sleep/add',
@@ -78,17 +91,19 @@ export default function QuickLogScreen() {
                                 ? 'Milestone'
                                 : 'Photo';
 
+            const colors = typeColors[module.type] || { bg: theme.colors.mint, accent: theme.colors.teal };
+
             return (
               <TouchableOpacity
                 key={module.type}
-                style={styles.gridItem}
+                style={[styles.gridItem, { backgroundColor: colors.bg }]}
                 onPress={() => router.push(routeMap[module.type] as any)}
               >
                 <View style={styles.gridItemIcon}>
                   <MaterialCommunityIcons
                     name={iconMap[module.type] as any}
-                    size={26}
-                    color={theme.colors.teal}
+                    size={32}
+                    color={colors.accent}
                   />
                 </View>
                 <Text style={styles.gridItemLabel}>{displayName}</Text>
@@ -137,25 +152,22 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
     justifyContent: 'space-between',
   },
   gridItem: {
-    width: '31%',
-    aspectRatio: 1.05,
-    backgroundColor: theme.colors.white,
+    width: '48%',
+    aspectRatio: 1.5,
     borderRadius: theme.borderRadius.card,
-    padding: theme.spacing.sm,
+    padding: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   gridItemIcon: {
     marginBottom: theme.spacing.sm,
   },
   gridItemLabel: {
-    fontSize: theme.typography.bodySmall.fontSize,
+    fontSize: theme.typography.body.fontSize,
     fontWeight: '600' as const,
     color: theme.colors.text,
     textAlign: 'center',

@@ -82,7 +82,7 @@ export default function HomeScreen() {
             icon="bottle-soda"
             backgroundColor="#DDF7F3"
             accentColor="#21B6AD"
-            onPress={() => latestFeed ? router.push(`/feed/${latestFeed.id}`) : router.push('/feed/add')}
+            onPress={() => router.push('/insights/feed')}
           />
 
           <TrackingStatusCard
@@ -93,8 +93,7 @@ export default function HomeScreen() {
             icon="sleep"
             backgroundColor="#EEE8FF"
             accentColor="#8A73D6"
-            onPress={() => currentSleep ? router.push('/sleep/add') : latestSleep ? router.push(`/sleep/${latestSleep.id}`) : router.push('/sleep/add')}
-            onIconPress={() => router.push('/insights/sleep')}
+            onPress={() => router.push('/insights/sleep')}
           />
 
           <TrackingStatusCard
@@ -105,7 +104,7 @@ export default function HomeScreen() {
             icon="water"
             backgroundColor="#FFF0E8"
             accentColor="#FF8B5C"
-            onPress={() => latestNappy ? router.push(`/nappy/${latestNappy.id}`) : router.push('/nappy/add')}
+            onPress={() => router.push('/insights/nappy')}
           />
         </View>
 

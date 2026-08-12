@@ -71,29 +71,41 @@ export default function InsightsScreen() {
                 </View>
               </TouchableOpacity>
 
-              <View style={styles.tile}>
+              <TouchableOpacity
+                style={styles.tile}
+                onPress={() => router.push('/insights/feed')}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.tileLabel}>Feeds / day</Text>
                 <Text style={styles.tileValue}>{feedsPerDay}</Text>
                 <View style={styles.tileBarTrack}>
                   <View style={[styles.tileBarFill, { width: '65%', backgroundColor: theme.colors.teal }]} />
                 </View>
-              </View>
+              </TouchableOpacity>
 
-              <View style={styles.tile}>
+              <TouchableOpacity
+                style={styles.tile}
+                onPress={() => router.push('/insights/feed')}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.tileLabel}>Avg bottle</Text>
                 <Text style={styles.tileValue}>{avgBottleMl != null ? `${avgBottleMl} ml` : '--'}</Text>
                 <View style={styles.tileBarTrack}>
                   <View style={[styles.tileBarFill, { width: '55%', backgroundColor: theme.colors.teal }]} />
                 </View>
-              </View>
+              </TouchableOpacity>
 
-              <View style={styles.tile}>
+              <TouchableOpacity
+                style={styles.tile}
+                onPress={() => router.push('/insights/nappy')}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.tileLabel}>Nappies / day</Text>
                 <Text style={styles.tileValue}>{nappiesPerDay}</Text>
                 <View style={styles.tileBarTrack}>
                   <View style={[styles.tileBarFill, { width: '60%', backgroundColor: theme.colors.orange }]} />
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <View style={styles.tile}>
                 <Text style={styles.tileLabel}>Tummy time</Text>
