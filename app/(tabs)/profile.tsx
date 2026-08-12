@@ -38,7 +38,6 @@ export default function ProfileScreen() {
     { label: 'Caregivers', onPress: () => router.push('/caregivers') },
     { label: 'Preferences', onPress: () => router.push('/settings/preferences') },
     { label: 'Reminders', onPress: () => router.push('/reminders') },
-    { label: 'Notifications', onPress: () => Alert.alert('Coming Soon', 'Notification settings coming soon.') },
     { label: 'Subscription', onPress: () => Alert.alert('Coming Soon', 'Subscription management coming soon.') },
     { label: 'Data & Privacy', onPress: () => Alert.alert('Coming Soon', 'Data export coming soon.') },
     { label: 'Help & Support', onPress: () => Alert.alert('Help & Support', 'Contact us at support@mybabysteps.app') },
