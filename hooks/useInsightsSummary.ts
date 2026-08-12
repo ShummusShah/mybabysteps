@@ -168,8 +168,14 @@ export function useInsightsSummary(range: InsightsRange): InsightsSummary {
             sleepInsight = 'Night sleep is trending longer.';
           } else if (changePct <= -10) {
             sleepInsight = 'Sleep has been trending shorter.';
+          } else {
+            sleepInsight = 'Sleep has been holding steady.';
           }
         }
+      }
+
+      if (!sleepInsight) {
+        sleepInsight = 'Keep logging to start seeing trends here.';
       }
 
       return {
