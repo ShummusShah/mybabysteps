@@ -4,6 +4,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useStore } from '@/stores/useStore';
 import { theme } from '@/constants/theme';
+import '@/lib/utils/notifications';
 
 const queryClient = new QueryClient();
 

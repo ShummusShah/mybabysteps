@@ -37,7 +37,7 @@ export default function ProfileScreen() {
     { label: 'Baby profile', onPress: () => router.push('/settings/baby') },
     { label: 'Caregivers', onPress: () => router.push('/caregivers') },
     { label: 'Preferences', onPress: () => router.push('/settings/preferences') },
-    { label: 'Reminders', onPress: () => Alert.alert('Coming Soon', 'Reminders are coming soon.') },
+    { label: 'Reminders', onPress: () => router.push('/reminders') },
     { label: 'Notifications', onPress: () => Alert.alert('Coming Soon', 'Notification settings coming soon.') },
     { label: 'Subscription', onPress: () => Alert.alert('Coming Soon', 'Subscription management coming soon.') },
     { label: 'Data & Privacy', onPress: () => Alert.alert('Coming Soon', 'Data export coming soon.') },

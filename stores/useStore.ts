@@ -24,6 +24,17 @@ interface ActiveTimer {
   metadata?: Record<string, any>;
 }
 
+export interface Reminder {
+  id: string;
+  title: string;
+  type: 'medicine' | 'feed' | 'sleep' | 'tummy' | 'other';
+  hour: number;
+  minute: number;
+  repeat: 'daily' | 'once';
+  enabled: boolean;
+  notificationId: string | null;
+}
+
 interface StoreState {
   currentBabyId: string | null;
   setCurrentBabyId: (id: string) => void;
@@ -46,6 +57,9 @@ interface StoreState {
 
   lastFeedTime: number | null;
   setLastFeedTime: (time: number | null) => void;
+
+  reminders: Reminder[];
+  setReminders: (reminders: Reminder[]) => void;
 
   initializeFromStorage: () => Promise<void>;
 }
@@ -110,14 +124,21 @@ export const useStore = create<StoreState>((set) => ({
     set({ lastFeedTime: time });
   },
 
+  reminders: [],
+  setReminders: (reminders: Reminder[]) => {
+    memoryStorage.setItem('reminders', JSON.stringify(reminders));
+    set({ reminders });
+  },
+
   initializeFromStorage: async () => {
     try {
-      const [babyId, timerStr, modulesStr, prefsStr, feedTimeStr] = await Promise.all([
+      const [babyId, timerStr, modulesStr, prefsStr, feedTimeStr, remindersStr] = await Promise.all([
         memoryStorage.getItem('currentBabyId'),
         memoryStorage.getItem('activeTimer'),
         memoryStorage.getItem('quickLogModules'),
         memoryStorage.getItem('userPreferences'),
         memoryStorage.getItem('lastFeedTime'),
+        memoryStorage.getItem('reminders'),
       ]);
 
       set({
@@ -148,6 +169,7 @@ export const useStore = create<StoreState>((set) => ({
               theme: 'system',
             },
         lastFeedTime: feedTimeStr ? parseInt(feedTimeStr) : null,
+        reminders: remindersStr ? JSON.parse(remindersStr) : [],
       });
     } catch (error) {
       console.error('Failed to initialize store:', error);
