@@ -1,68 +1,90 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { Header } from '@/components/ui/Header';
-import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { theme } from '@/constants/theme';
+import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAuth } from '@/hooks/useAuth';
+import { useBaby } from '@/hooks/useBaby';
+import { theme } from '@/constants/theme';
+import { formatBabyAge } from '@/lib/utils/dateUtils';
+
+interface MenuRow {
+  label: string;
+  onPress: () => void;
+}
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { signOut } = useAuth();
+  const { baby } = useBaby();
 
   async function handleSignOut() {
-    await signOut();
-    router.replace('/auth/welcome');
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut();
+          router.replace('/auth/welcome');
+        },
+      },
+    ]);
   }
+
+  const menuRows: MenuRow[] = [
+    { label: 'Baby profile', onPress: () => router.push('/settings/baby') },
+    { label: 'Caregivers', onPress: () => router.push('/caregivers') },
+    { label: 'Preferences', onPress: () => router.push('/settings/preferences') },
+    { label: 'Reminders', onPress: () => Alert.alert('Coming Soon', 'Reminders are coming soon.') },
+    { label: 'Notifications', onPress: () => Alert.alert('Coming Soon', 'Notification settings coming soon.') },
+    { label: 'Subscription', onPress: () => Alert.alert('Coming Soon', 'Subscription management coming soon.') },
+    { label: 'Data & Privacy', onPress: () => Alert.alert('Coming Soon', 'Data export coming soon.') },
+    { label: 'Help & Support', onPress: () => Alert.alert('Help & Support', 'Contact us at support@mybabysteps.app') },
+    {
+      label: 'About MyBabySteps',
+      onPress: () => Alert.alert('About MyBabySteps', 'MyBabySteps Baby Tracking App\nVersion 1.0.0'),
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header title="Profile" centerTitle />
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Profile</Text>
 
-      <View style={styles.content}>
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <MaterialCommunityIcons name="account" size={40} color={theme.colors.teal} />
+        <View style={styles.babyCard}>
+          <View style={styles.babyAvatar}>
+            {baby?.avatar_url && (
+              <Image source={{ uri: baby.avatar_url }} style={styles.babyAvatarImage} contentFit="cover" />
+            )}
           </View>
-          <Text style={styles.name}>{profile?.display_name || 'User'}</Text>
-          <Text style={styles.email}>{profile?.email}</Text>
-        </View>
-
-        <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings/baby')}>
-            <MaterialCommunityIcons name="baby-face" size={24} color={theme.colors.teal} />
-            <Text style={styles.menuLabel}>Baby Profile</Text>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/caregivers')}>
-            <MaterialCommunityIcons name="account-multiple" size={24} color={theme.colors.teal} />
-            <Text style={styles.menuLabel}>Caregivers</Text>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
-            <MaterialCommunityIcons name="cog" size={24} color={theme.colors.teal} />
-            <Text style={styles.menuLabel}>Settings</Text>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <MaterialCommunityIcons name="crown" size={24} color={theme.colors.teal} />
-            <Text style={styles.menuLabel}>Go Premium</Text>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
+          <View style={styles.babyInfo}>
+            <Text style={styles.babyName}>{baby?.name || 'Baby'}</Text>
+            <Text style={styles.babyAge}>{baby ? formatBabyAge(baby.date_of_birth) : ''}</Text>
+          </View>
+          <TouchableOpacity onPress={() => router.push('/settings/baby')}>
+            <Text style={styles.editLink}>Edit</Text>
           </TouchableOpacity>
         </View>
 
-        <PrimaryButton
-          title="Sign Out"
-          onPress={handleSignOut}
-          variant="secondary"
-          style={styles.signOutButton}
-        />
-      </View>
+        <View style={styles.menuCard}>
+          {menuRows.map((row, index) => (
+            <TouchableOpacity
+              key={row.label}
+              style={[styles.menuRow, index !== menuRows.length - 1 && styles.menuRowBorder]}
+              onPress={row.onPress}
+            >
+              <Text style={styles.menuLabel}>{row.label}</Text>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -75,54 +97,83 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
   },
-  profileCard: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xl,
-    marginBottom: theme.spacing.xl,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.mint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  name: {
-    fontSize: theme.typography.sectionTitle.fontSize,
-    fontWeight: theme.typography.sectionTitle.fontWeight,
+  title: {
+    fontSize: theme.typography.screenTitle.fontSize,
+    fontWeight: theme.typography.screenTitle.fontWeight,
     color: theme.colors.text,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
-  email: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
-  },
-  menuSection: {
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xxl,
-  },
-  menuItem: {
+  babyCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
+    gap: theme.spacing.md,
+    ...theme.shadows.small,
+  },
+  babyAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.peach,
+    overflow: 'hidden',
+  },
+  babyAvatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  babyInfo: {
+    flex: 1,
+  },
+  babyName: {
+    fontSize: theme.typography.cardHeadline.fontSize,
+    fontWeight: '700' as const,
+    color: theme.colors.text,
+  },
+  babyAge: {
+    fontSize: theme.typography.metadata.fontSize,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
+  editLink: {
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.teal,
+  },
+  menuCard: {
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.card,
+    marginBottom: theme.spacing.xl,
+    ...theme.shadows.small,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.input,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  },
+  menuRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   menuLabel: {
-    flex: 1,
     fontSize: theme.typography.body.fontSize,
     fontWeight: '600' as const,
     color: theme.colors.text,
-    marginLeft: theme.spacing.md,
   },
   signOutButton: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
     marginBottom: theme.spacing.xl,
+  },
+  signOutText: {
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.error,
   },
 });
