@@ -1,191 +1,98 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useBaby } from '@/hooks/useBaby';
-import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
-import {
-  formatTime,
-  formatDuration,
-  formatElapsedTime,
-  groupByDate,
-} from '@/lib/utils/dateUtils';
-import { formatMilk } from '@/lib/utils/unitConversion';
-import { useStore } from '@/stores/useStore';
-import { useQuery } from '@tanstack/react-query';
+import { getDayLabel } from '@/lib/utils/dateUtils';
+import { useLogEntries, LogEntry, LogEntryType } from '@/hooks/useLogEntries';
+import { LogEntryRow } from '@/components/shared/LogEntryRow';
 
-interface LogEntry {
-  id: string;
-  type: 'feed' | 'sleep' | 'nappy' | 'medicine' | 'temperature';
-  timestamp: string;
-  title: string;
-  subtitle: string;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-  data: any;
+type FilterOption = 'all' | 'feed' | 'sleep' | 'nappy';
+
+const FILTERS: { value: FilterOption; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'feed', label: 'Feed' },
+  { value: 'sleep', label: 'Sleep' },
+  { value: 'nappy', label: 'Nappy' },
+];
+
+function groupByDay(logs: LogEntry[]): { label: string; items: LogEntry[] }[] {
+  const groups: { label: string; items: LogEntry[] }[] = [];
+  const indexByLabel: Record<string, number> = {};
+
+  logs.forEach((item) => {
+    const label = getDayLabel(item.timestamp).toUpperCase();
+    if (indexByLabel[label] === undefined) {
+      indexByLabel[label] = groups.length;
+      groups.push({ label, items: [] });
+    }
+    groups[indexByLabel[label]].items.push(item);
+  });
+
+  return groups;
 }
 
 export default function HistoryScreen() {
   const router = useRouter();
-  const { baby } = useBaby();
-  const { userPreferences } = useStore();
+  const { logs, isLoading } = useLogEntries(7);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterOption>('all');
 
-  const { data: logs, isLoading } = useQuery({
-    queryKey: ['history', baby?.id],
-    queryFn: async () => {
-      if (!baby) return [];
+  const filteredLogs = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return logs.filter((item) => {
+      if (filter !== 'all' && item.type !== (filter as LogEntryType)) return false;
+      if (!query) return true;
+      return item.title.toLowerCase().includes(query) || item.subtitle.toLowerCase().includes(query);
+    });
+  }, [logs, search, filter]);
 
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const groups = useMemo(() => groupByDay(filteredLogs), [filteredLogs]);
 
-      const [feeds, sleeps, nappies, medicines, temperatures] = await Promise.all([
-        supabase
-          .from('feeding_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('start_time', sevenDaysAgo.toISOString())
-          .order('start_time', { ascending: false }),
-        supabase
-          .from('sleep_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('start_time', sevenDaysAgo.toISOString())
-          .order('start_time', { ascending: false }),
-        supabase
-          .from('nappy_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('logged_at', sevenDaysAgo.toISOString())
-          .order('logged_at', { ascending: false }),
-        supabase
-          .from('medicine_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('given_at', sevenDaysAgo.toISOString())
-          .order('given_at', { ascending: false }),
-        supabase
-          .from('temperature_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('taken_at', sevenDaysAgo.toISOString())
-          .order('taken_at', { ascending: false }),
-      ]);
-
-      const items: LogEntry[] = [];
-
-      (feeds.data || []).forEach((feed) => {
-        items.push({
-          id: feed.id,
-          type: 'feed',
-          timestamp: feed.start_time,
-          title: feed.feed_type === 'breast' ? 'Breastfeed' : 'Bottle',
-          subtitle:
-            feed.feed_type === 'breast'
-              ? `${feed.left_duration_seconds}s + ${feed.right_duration_seconds}s`
-              : `${formatMilk(feed.amount_ml || 0, userPreferences.milkUnit)}`,
-          icon: 'bottle-soda',
-          data: feed,
-        });
-      });
-
-      (sleeps.data || []).forEach((sleep) => {
-        const endTime = sleep.end_time ? new Date(sleep.end_time).getTime() : Date.now();
-        const duration = Math.floor((endTime - new Date(sleep.start_time).getTime()) / 1000);
-        items.push({
-          id: sleep.id,
-          type: 'sleep',
-          timestamp: sleep.start_time,
-          title: sleep.sleep_type === 'night' ? '🌙 Night Sleep' : '🌤️ Nap',
-          subtitle: `${formatDuration(duration)}`,
-          icon: 'sleep',
-          data: sleep,
-        });
-      });
-
-      (nappies.data || []).forEach((nappy) => {
-        const typeLabel =
-          nappy.type === 'both'
-            ? 'Wet + dirty'
-            : nappy.type.charAt(0).toUpperCase() + nappy.type.slice(1);
-        items.push({
-          id: nappy.id,
-          type: 'nappy',
-          timestamp: nappy.logged_at,
-          title: 'Nappy',
-          subtitle: typeLabel,
-          icon: 'water',
-          data: nappy,
-        });
-      });
-
-      (medicines.data || []).forEach((medicine) => {
-        items.push({
-          id: medicine.id,
-          type: 'medicine',
-          timestamp: medicine.given_at,
-          title: 'Medicine',
-          subtitle: medicine.medicine_name,
-          icon: 'pill',
-          data: medicine,
-        });
-      });
-
-      (temperatures.data || []).forEach((temperature) => {
-        const displayTemp = `${temperature.temperature.toFixed(1)}°${temperature.unit}`;
-        const isFever =
-          temperature.unit === 'C'
-            ? temperature.temperature >= 38
-            : temperature.temperature >= 100.4;
-        items.push({
-          id: temperature.id,
-          type: 'temperature',
-          timestamp: temperature.taken_at,
-          title: 'Temperature',
-          subtitle: displayTemp,
-          icon: isFever ? 'thermometer-alert' : 'thermometer',
-          data: temperature,
-        });
-      });
-
-      return items.sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-    },
-    enabled: !!baby,
-  });
-
-  const groupedLogs = logs ? groupByDate(logs, 'timestamp') : {};
-
-  const handleNavigate = (item: LogEntry) => {
+  function handleNavigate(item: LogEntry) {
     if (item.type === 'feed') router.push(`/feed/${item.id}`);
     else if (item.type === 'sleep') router.push(`/sleep/${item.id}`);
     else if (item.type === 'nappy') router.push(`/nappy/${item.id}`);
+    else if (item.type === 'tummy') router.push(`/tummy/${item.id}`);
     else if (item.type === 'medicine') router.push(`/medicine/${item.id}`);
     else if (item.type === 'temperature') router.push(`/temperature/${item.id}`);
-  };
+    else if (item.type === 'milestone') router.push(`/milestones/${item.id}`);
+    // growth and photo have no detail screen yet
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>History</Text>
-          <Text style={styles.subtitle}>Last 7 days of tracking</Text>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>History</Text>
+
+        <TextInput
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search logs..."
+          placeholderTextColor={theme.colors.textSecondary}
+        />
+
+        <View style={styles.filterRow}>
+          {FILTERS.map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.filterPill, filter === opt.value && styles.filterPillActive]}
+              onPress={() => setFilter(opt.value)}
+            >
+              <Text style={[styles.filterPillText, filter === opt.value && styles.filterPillTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {isLoading ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={theme.colors.teal} />
           </View>
-        ) : logs && logs.length === 0 ? (
+        ) : groups.length === 0 ? (
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons
               name="history"
@@ -193,53 +100,19 @@ export default function HistoryScreen() {
               color={theme.colors.textSecondary}
               style={styles.emptyIcon}
             />
-            <Text style={styles.emptyTitle}>No logs yet</Text>
-            <Text style={styles.emptySubtitle}>Start tracking your baby's day</Text>
+            <Text style={styles.emptyTitle}>No logs found</Text>
+            <Text style={styles.emptySubtitle}>
+              {search || filter !== 'all' ? 'Try a different search or filter' : "Start tracking your baby's day"}
+            </Text>
           </View>
         ) : (
           <View style={styles.content}>
-            {Object.entries(groupedLogs).map(([dateLabel, dateItems]: [string, any]) => (
-              <View key={dateLabel}>
-                {/* Date Header */}
-                <Text style={styles.dateHeader}>{dateLabel}</Text>
-
-                {/* Logs for this date */}
+            {groups.map((group) => (
+              <View key={group.label}>
+                <Text style={styles.dateHeader}>{group.label}</Text>
                 <View style={styles.logsList}>
-                  {dateItems.map((item: LogEntry) => (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={styles.logItem}
-                      onPress={() => handleNavigate(item)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.logIcon}>
-                        <MaterialCommunityIcons
-                          name={item.icon}
-                          size={20}
-                          color={theme.colors.teal}
-                        />
-                      </View>
-
-                      <View style={styles.logContent}>
-                        <Text style={styles.logTitle}>{item.title}</Text>
-                        <Text style={styles.logSubtitle}>{item.subtitle}</Text>
-                      </View>
-
-                      <View style={styles.logMeta}>
-                        <Text style={styles.logTime}>
-                          {new Date(item.timestamp).toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
-                          })}
-                        </Text>
-                        <MaterialCommunityIcons
-                          name="chevron-right"
-                          size={20}
-                          color={theme.colors.textSecondary}
-                        />
-                      </View>
-                    </TouchableOpacity>
+                  {group.items.map((item) => (
+                    <LogEntryRow key={item.id} item={item} onPress={() => handleNavigate(item)} />
                   ))}
                 </View>
               </View>
@@ -258,20 +131,52 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
+  scrollView: {
+    flex: 1,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
   },
   title: {
     fontSize: theme.typography.screenTitle.fontSize,
     fontWeight: theme.typography.screenTitle.fontWeight,
     color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
   },
-  subtitle: {
+  searchInput: {
+    backgroundColor: theme.colors.white,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     fontSize: theme.typography.body.fontSize,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.lg,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
+  },
+  filterPill: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: 20,
+    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  filterPillActive: {
+    backgroundColor: theme.colors.mint,
+    borderColor: theme.colors.mint,
+  },
+  filterPillText: {
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: '600' as const,
     color: theme.colors.textSecondary,
+  },
+  filterPillTextActive: {
+    color: theme.colors.teal,
   },
   centerContainer: {
     flex: 1,
@@ -282,7 +187,7 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: theme.spacing.xxl,
-    minHeight: 400,
+    minHeight: 300,
     justifyContent: 'center',
   },
   emptyIcon: {
@@ -300,63 +205,20 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   content: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
   },
   dateHeader: {
     fontSize: theme.typography.label.fontSize,
     fontWeight: '700' as const,
-    color: theme.colors.text,
-    marginTop: theme.spacing.xl,
+    color: theme.colors.textSecondary,
     marginBottom: theme.spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   logsList: {
-    gap: theme.spacing.sm,
     marginBottom: theme.spacing.lg,
   },
-  logItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.input,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  logIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: theme.colors.mint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
-  logContent: {
-    flex: 1,
-  },
-  logTitle: {
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600' as const,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-  },
-  logSubtitle: {
-    fontSize: theme.typography.metadata.fontSize,
-    color: theme.colors.textSecondary,
-  },
-  logMeta: {
-    alignItems: 'flex-end',
-    gap: theme.spacing.sm,
-  },
-  logTime: {
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '500' as const,
-    color: theme.colors.text,
-  },
   spacer: {
-    height: theme.spacing.xl,
+    height: theme.spacing.xxl,
   },
 });

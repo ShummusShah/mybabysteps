@@ -1,18 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useBaby } from './useBaby';
 import { useStore } from '@/stores/useStore';
-import { supabase } from '@/lib/auth/supabase';
-import { formatDuration } from '@/lib/utils/dateUtils';
-import { formatMilk } from '@/lib/utils/unitConversion';
+import { fetchLogEntries } from './useLogEntries';
+import type { LogEntry } from './useLogEntries';
 
-export interface TimelineItem {
-  id: string;
-  type: 'feed' | 'sleep' | 'nappy' | 'tummy' | 'medicine' | 'temperature' | 'growth' | 'milestone' | 'photo';
-  timestamp: string;
-  title: string;
-  subtitle: string;
-  rawData: any;
-}
+export type { LogEntry as TimelineItem } from './useLogEntries';
 
 export function useTodayTimeline() {
   const { baby } = useBaby();
@@ -20,7 +12,7 @@ export function useTodayTimeline() {
 
   const { data: timeline = [], isLoading } = useQuery({
     queryKey: ['today-timeline', baby?.id],
-    queryFn: async (): Promise<TimelineItem[]> => {
+    queryFn: async (): Promise<LogEntry[]> => {
       if (!baby) return [];
 
       const today = new Date();
@@ -28,184 +20,7 @@ export function useTodayTimeline() {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const [feeds, sleeps, nappies, tummyTimes, medicines, temperatures, growths, milestones, photos] = await Promise.all([
-        supabase
-          .from('feeding_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('start_time', today.toISOString())
-          .lt('start_time', tomorrow.toISOString())
-          .order('start_time', { ascending: false }),
-        supabase
-          .from('sleep_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('start_time', today.toISOString())
-          .lt('start_time', tomorrow.toISOString())
-          .order('start_time', { ascending: false }),
-        supabase
-          .from('nappy_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('logged_at', today.toISOString())
-          .lt('logged_at', tomorrow.toISOString())
-          .order('logged_at', { ascending: false }),
-        supabase
-          .from('tummy_time_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('start_time', today.toISOString())
-          .lt('start_time', tomorrow.toISOString())
-          .order('start_time', { ascending: false }),
-        supabase
-          .from('medicine_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('given_at', today.toISOString())
-          .lt('given_at', tomorrow.toISOString())
-          .order('given_at', { ascending: false }),
-        supabase
-          .from('temperature_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('taken_at', today.toISOString())
-          .lt('taken_at', tomorrow.toISOString())
-          .order('taken_at', { ascending: false }),
-        supabase
-          .from('growth_logs')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('measured_at', today.toISOString())
-          .lt('measured_at', tomorrow.toISOString())
-          .order('measured_at', { ascending: false }),
-        supabase
-          .from('milestones')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('achieved_at', today.toISOString())
-          .lt('achieved_at', tomorrow.toISOString())
-          .order('achieved_at', { ascending: false }),
-        supabase
-          .from('photos')
-          .select('*')
-          .eq('baby_id', baby.id)
-          .gte('logged_at', today.toISOString())
-          .lt('logged_at', tomorrow.toISOString())
-          .order('logged_at', { ascending: false }),
-      ]);
-
-      const items: TimelineItem[] = [];
-
-      (feeds.data || []).forEach((feed) => {
-        items.push({
-          id: feed.id,
-          type: 'feed',
-          timestamp: feed.start_time,
-          title: feed.feed_type === 'breast' ? 'Breastfeed' : 'Bottle',
-          subtitle: feed.feed_type === 'breast' ? `${feed.left_duration_seconds}s + ${feed.right_duration_seconds}s` : `${formatMilk(feed.amount_ml || 0, userPreferences.milkUnit)}`,
-          rawData: feed,
-        });
-      });
-
-      (sleeps.data || []).forEach((sleep) => {
-        const endTime = sleep.end_time ? new Date(sleep.end_time).getTime() : Date.now();
-        const duration = Math.floor((endTime - new Date(sleep.start_time).getTime()) / 1000);
-        items.push({
-          id: sleep.id,
-          type: 'sleep',
-          timestamp: sleep.start_time,
-          title: sleep.end_time ? 'Slept' : 'Woke up',
-          subtitle: `${formatDuration(duration)}`,
-          rawData: sleep,
-        });
-      });
-
-      (nappies.data || []).forEach((nappy) => {
-        const typeLabel = nappy.type === 'both' ? 'Wet + dirty' : nappy.type.charAt(0).toUpperCase() + nappy.type.slice(1);
-        items.push({
-          id: nappy.id,
-          type: 'nappy',
-          timestamp: nappy.logged_at,
-          title: `${typeLabel} nappy`,
-          subtitle: '',
-          rawData: nappy,
-        });
-      });
-
-      (tummyTimes.data || []).forEach((tummy) => {
-        const endTime = tummy.end_time ? new Date(tummy.end_time).getTime() : Date.now();
-        const duration = Math.floor((endTime - new Date(tummy.start_time).getTime()) / 1000);
-        items.push({
-          id: tummy.id,
-          type: 'tummy',
-          timestamp: tummy.start_time,
-          title: 'Tummy Time',
-          subtitle: tummy.end_time ? formatDuration(duration) : 'In progress',
-          rawData: tummy,
-        });
-      });
-
-      (medicines.data || []).forEach((medicine) => {
-        items.push({
-          id: medicine.id,
-          type: 'medicine',
-          timestamp: medicine.given_at,
-          title: medicine.medicine_name,
-          subtitle: medicine.dosage || '',
-          rawData: medicine,
-        });
-      });
-
-      (temperatures.data || []).forEach((temperature) => {
-        items.push({
-          id: temperature.id,
-          type: 'temperature',
-          timestamp: temperature.taken_at,
-          title: 'Temperature',
-          subtitle: `${temperature.temperature.toFixed(1)}°${temperature.unit}`,
-          rawData: temperature,
-        });
-      });
-
-      (growths.data || []).forEach((growth) => {
-        const parts: string[] = [];
-        if (growth.weight != null) parts.push(`${growth.weight}${growth.weight_unit || ''}`);
-        if (growth.height != null) parts.push(`${growth.height}${growth.height_unit || ''}`);
-        if (growth.head_circumference != null) parts.push(`Head ${growth.head_circumference}cm`);
-        items.push({
-          id: growth.id,
-          type: 'growth',
-          timestamp: growth.measured_at,
-          title: 'Growth',
-          subtitle: parts.join(' · '),
-          rawData: growth,
-        });
-      });
-
-      (milestones.data || []).forEach((milestone) => {
-        items.push({
-          id: milestone.id,
-          type: 'milestone',
-          timestamp: milestone.achieved_at,
-          title: milestone.title,
-          subtitle: 'Milestone',
-          rawData: milestone,
-        });
-      });
-
-      (photos.data || []).forEach((photo) => {
-        items.push({
-          id: photo.id,
-          type: 'photo',
-          timestamp: photo.logged_at,
-          title: 'Photo',
-          subtitle: photo.caption || '',
-          rawData: photo,
-        });
-      });
-
-      items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      return items;
+      return fetchLogEntries(baby.id, userPreferences.milkUnit, today, tomorrow);
     },
     enabled: !!baby,
   });
