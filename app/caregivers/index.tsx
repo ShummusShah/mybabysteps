@@ -9,9 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useHousehold, HouseholdInvite } from '@/hooks/useHousehold';
 import { useAuth } from '@/hooks/useAuth';
 import { theme } from '@/constants/theme';
@@ -19,9 +19,23 @@ import { safeBack } from '@/lib/utils/navigation';
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner',
+  parent: 'Parent · Can log & edit',
+  caregiver: 'Caregiver · Can log & edit',
+  viewer: 'Viewer · Can view only',
+};
+
+const ROLE_INVITE_LABELS: Record<string, string> = {
+  owner: 'Owner',
   parent: 'Parent',
   caregiver: 'Caregiver',
   viewer: 'Viewer',
+};
+
+const AVATAR_COLORS: Record<string, string> = {
+  owner: theme.colors.mint,
+  parent: theme.colors.lavender,
+  caregiver: theme.colors.peach,
+  viewer: theme.colors.yellow,
 };
 
 export default function CaregiversScreen() {
@@ -106,12 +120,7 @@ export default function CaregiversScreen() {
 
   return (
     <ScreenContainer>
-      <Header
-        title="Caregivers"
-        leftAction={() => safeBack(router, '/(tabs)/profile')}
-        rightAction={() => router.push('/caregivers/invite')}
-        rightLabel="Invite"
-      />
+      <Header title="Caregivers" leftLabel="‹" leftAction={() => safeBack(router, '/(tabs)/profile')} />
 
       {isLoading ? (
         <View style={styles.centerContainer}>
@@ -124,12 +133,11 @@ export default function CaregiversScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Invitations for you</Text>
               {receivedInvites.map((invite) => (
-                <View key={invite.id} style={styles.inviteCard}>
-                  <View style={styles.inviteInfo}>
-                    <Text style={styles.inviteText}>
-                      You&apos;ve been invited as a <Text style={styles.inviteRole}>{ROLE_LABELS[invite.role]}</Text>
-                    </Text>
-                  </View>
+                <View key={invite.id} style={styles.receivedInviteCard}>
+                  <Text style={styles.inviteText}>
+                    You&apos;ve been invited as a{' '}
+                    <Text style={styles.inviteRole}>{ROLE_INVITE_LABELS[invite.role]}</Text>
+                  </Text>
                   <View style={styles.inviteActions}>
                     <TouchableOpacity
                       style={[styles.pillButton, styles.declineButton]}
@@ -153,36 +161,44 @@ export default function CaregiversScreen() {
 
           {/* Members */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Household Members</Text>
             {members.map((member) => {
               const isMe = member.user_id === session?.user?.id;
+              const removable = canManage && !isMe;
+              const CardComponent = removable ? TouchableOpacity : View;
               return (
-                <View key={member.id} style={styles.memberCard}>
-                  <View style={styles.memberAvatar}>
-                    <MaterialCommunityIcons name="account" size={22} color={theme.colors.teal} />
-                  </View>
+                <CardComponent
+                  key={member.id}
+                  style={styles.memberCard}
+                  {...(removable
+                    ? {
+                        onPress: () =>
+                          handleRemoveMember(
+                            member.id,
+                            member.profile?.display_name || member.profile?.email || 'This member'
+                          ),
+                        disabled: busyId === member.id,
+                        activeOpacity: 0.7,
+                      }
+                    : {})}
+                >
+                  <View
+                    style={[
+                      styles.memberAvatar,
+                      { backgroundColor: AVATAR_COLORS[member.role] || theme.colors.mint },
+                    ]}
+                  />
                   <View style={styles.memberInfo}>
                     <Text style={styles.memberName}>
                       {member.profile?.display_name || member.profile?.email || 'Unknown'}
-                      {isMe && ' (You)'}
                     </Text>
                     <Text style={styles.memberRole}>{ROLE_LABELS[member.role]}</Text>
                   </View>
-                  {canManage && !isMe && (
-                    <TouchableOpacity
-                      onPress={() =>
-                        handleRemoveMember(
-                          member.id,
-                          member.profile?.display_name || member.profile?.email || 'This member'
-                        )
-                      }
-                      disabled={busyId === member.id}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <MaterialCommunityIcons name="close-circle-outline" size={22} color={theme.colors.error} />
-                    </TouchableOpacity>
+                  {isMe && (
+                    <View style={styles.youBadge}>
+                      <Text style={styles.youBadgeText}>You</Text>
+                    </View>
                   )}
-                </View>
+                </CardComponent>
               );
             })}
           </View>
@@ -190,27 +206,27 @@ export default function CaregiversScreen() {
           {/* Pending outgoing invites */}
           {sentInvites.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pending Invites</Text>
+              <Text style={styles.sectionTitle}>Pending invites</Text>
               {sentInvites.map((invite) => (
-                <View key={invite.id} style={styles.pendingCard}>
-                  <View style={styles.pendingIcon}>
-                    <MaterialCommunityIcons name="email-outline" size={20} color={theme.colors.textSecondary} />
-                  </View>
-                  <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{invite.email}</Text>
-                    <Text style={styles.memberRole}>{ROLE_LABELS[invite.role]} · Pending</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleCancelInvite(invite)}
-                    disabled={busyId === invite.id}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <MaterialCommunityIcons name="close" size={20} color={theme.colors.textSecondary} />
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  key={invite.id}
+                  style={styles.pendingCard}
+                  onPress={() => handleCancelInvite(invite)}
+                  disabled={busyId === invite.id}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.pendingEmail}>{invite.email}</Text>
+                  <Text style={styles.pendingStatus}>Pending</Text>
+                </TouchableOpacity>
               ))}
             </View>
           )}
+
+          <PrimaryButton
+            title="Invite Caregiver"
+            onPress={() => router.push('/caregivers/invite')}
+            style={styles.inviteButton}
+          />
         </ScrollView>
       )}
     </ScreenContainer>
@@ -232,24 +248,21 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: theme.typography.metadata.fontSize,
     fontWeight: '600' as const,
     color: theme.colors.textSecondary,
-    textTransform: 'uppercase',
     marginBottom: theme.spacing.sm,
   },
-  inviteCard: {
+  receivedInviteCard: {
     backgroundColor: theme.colors.mint,
     borderRadius: theme.borderRadius.input,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
   },
-  inviteInfo: {
-    marginBottom: theme.spacing.md,
-  },
   inviteText: {
     fontSize: theme.typography.body.fontSize,
     color: theme.colors.text,
+    marginBottom: theme.spacing.md,
   },
   inviteRole: {
     fontWeight: '700' as const,
@@ -287,27 +300,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.input,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.card,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
     gap: theme.spacing.md,
+    ...theme.shadows.small,
   },
   memberAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.mint,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   memberInfo: {
     flex: 1,
   },
   memberName: {
     fontSize: theme.typography.body.fontSize,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: theme.colors.text,
   },
   memberRole: {
@@ -315,24 +324,36 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
+  youBadge: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: 14,
+    backgroundColor: theme.colors.mint,
+  },
+  youBadgeText: {
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.teal,
+  },
   pendingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.input,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderStyle: 'dashed',
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.card,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
-    gap: theme.spacing.md,
+    ...theme.shadows.small,
   },
-  pendingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
+  pendingEmail: {
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.text,
+  },
+  pendingStatus: {
+    fontSize: theme.typography.metadata.fontSize,
+    color: theme.colors.orange,
+    marginTop: 2,
+  },
+  inviteButton: {
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
 });
