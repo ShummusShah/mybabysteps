@@ -39,7 +39,7 @@ export default function SleepDetailScreen() {
     try {
       const { data, error } = await supabase
         .from('sleep_logs')
-        .select('*')
+        .select('*, creator:profiles(display_name, email)')
         .eq('id', id)
         .single();
 
@@ -211,6 +211,21 @@ export default function SleepDetailScreen() {
             <Text style={styles.value}>{log.notes}</Text>
           </View>
         )}
+
+        {/* Logged By */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons
+              name="account-outline"
+              size={20}
+              color={theme.colors.teal}
+            />
+            <Text style={styles.sectionTitle}>Logged by</Text>
+          </View>
+          <Text style={styles.value}>
+            {log.creator?.display_name || log.creator?.email || 'Unknown'}
+          </Text>
+        </View>
 
         {/* Delete Button */}
         <PrimaryButton

@@ -29,7 +29,7 @@ export default function MedicineDetailsScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medicine_logs')
-        .select('*')
+        .select('*, creator:profiles(display_name, email)')
         .eq('id', id)
         .single();
 
@@ -87,7 +87,7 @@ export default function MedicineDetailsScreen() {
     );
   }
 
-  const logTime = new Date(medicineLog.logged_at);
+  const logTime = new Date(medicineLog.given_at);
 
   return (
     <ScreenContainer scrollable>
@@ -102,7 +102,7 @@ export default function MedicineDetailsScreen() {
               color={theme.colors.teal}
             />
             <View style={styles.headerText}>
-              <Text style={styles.medicineName}>{medicineLog.name}</Text>
+              <Text style={styles.medicineName}>{medicineLog.medicine_name}</Text>
               <Text style={styles.timestamp}>{formatTime(logTime)}</Text>
             </View>
           </View>
@@ -126,6 +126,13 @@ export default function MedicineDetailsScreen() {
           <View style={styles.detail}>
             <Text style={styles.label}>Logged At</Text>
             <Text style={styles.value}>{logTime.toLocaleString()}</Text>
+          </View>
+
+          <View style={styles.detail}>
+            <Text style={styles.label}>Logged by</Text>
+            <Text style={styles.value}>
+              {medicineLog.creator?.display_name || medicineLog.creator?.email || 'Unknown'}
+            </Text>
           </View>
         </View>
 

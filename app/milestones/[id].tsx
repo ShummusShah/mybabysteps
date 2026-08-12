@@ -24,12 +24,12 @@ export default function MilestoneDetailScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('milestones')
-        .select('*')
+        .select('*, creator:profiles(display_name, email)')
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return data as Milestone;
+      return data as Milestone & { creator?: { display_name: string | null; email: string | null } };
     },
     enabled: !!id,
   });
@@ -106,6 +106,16 @@ export default function MilestoneDetailScreen() {
             <Text style={styles.value}>{milestone.notes}</Text>
           </View>
         )}
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="account-outline" size={20} color={theme.colors.teal} />
+            <Text style={styles.sectionTitle}>Logged by</Text>
+          </View>
+          <Text style={styles.value}>
+            {milestone.creator?.display_name || milestone.creator?.email || 'Unknown'}
+          </Text>
+        </View>
 
         <PrimaryButton
           title={deleting ? 'Deleting...' : 'Delete Milestone'}

@@ -29,7 +29,7 @@ export default function TemperatureDetailsScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('temperature_logs')
-        .select('*')
+        .select('*, creator:profiles(display_name, email)')
         .eq('id', id)
         .single();
 
@@ -137,6 +137,13 @@ export default function TemperatureDetailsScreen() {
           <View style={styles.detail}>
             <Text style={styles.label}>Logged At</Text>
             <Text style={styles.value}>{logTime.toLocaleString()}</Text>
+          </View>
+
+          <View style={styles.detail}>
+            <Text style={styles.label}>Logged by</Text>
+            <Text style={styles.value}>
+              {temperatureLog.creator?.display_name || temperatureLog.creator?.email || 'Unknown'}
+            </Text>
           </View>
         </View>
 
