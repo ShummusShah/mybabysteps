@@ -28,7 +28,7 @@ const routeMap: Record<string, string> = {
   tummy: '/tummy/add',
   medicine: '/medicine/add',
   temperature: '/temperature/add',
-  growth: '/growth/add',
+  growth: '/insights/growth',
   milestone: '/milestones',
   photo: '/photos',
 };
