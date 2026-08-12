@@ -11,7 +11,6 @@ import {
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
@@ -21,13 +20,16 @@ import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
 import { formatTime } from '@/lib/utils/dateUtils';
 
+const UNITS = ['ml', 'mg', 'drops', 'other'] as const;
+
 export default function AddMedicineScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { baby } = useBaby();
 
   const [medicineName, setMedicineName] = useState('');
-  const [dosage, setDosage] = useState('');
+  const [dose, setDose] = useState('');
+  const [unit, setUnit] = useState<(typeof UNITS)[number]>('ml');
   const [time, setTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notes, setNotes] = useState('');
@@ -55,11 +57,13 @@ export default function AddMedicineScreen() {
         return;
       }
 
+      const dosage = dose.trim() ? `${dose.trim()} ${unit}` : null;
+
       const { error } = await supabase.from('medicine_logs').insert({
         baby_id: baby.id,
         created_by: user.id,
         medicine_name: medicineName,
-        dosage: dosage || null,
+        dosage,
         given_at: time.toISOString(),
         notes: notes || null,
       });
@@ -87,10 +91,10 @@ export default function AddMedicineScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header title="Log Medicine" leftAction={() => safeBack(router, '/(tabs)')} />
+      <Header title="Log Medicine" leftLabel="‹" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.label}>Medicine Name *</Text>
+        <Text style={styles.label}>Medicine name</Text>
         <TextInput
           style={styles.input}
           placeholder="e.g., Vitamin D, Paracetamol"
@@ -99,22 +103,32 @@ export default function AddMedicineScreen() {
           placeholderTextColor={theme.colors.textSecondary}
         />
 
-        <Text style={styles.label}>Dosage (Optional)</Text>
+        <Text style={styles.label}>Dose</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g., 5ml, 1 tablet"
-          value={dosage}
-          onChangeText={setDosage}
+          placeholder="e.g., 0.5"
+          value={dose}
+          onChangeText={setDose}
+          keyboardType="decimal-pad"
           placeholderTextColor={theme.colors.textSecondary}
         />
 
+        <Text style={styles.label}>Unit</Text>
+        <View style={styles.unitRow}>
+          {UNITS.map((u) => (
+            <TouchableOpacity
+              key={u}
+              style={[styles.unitPill, unit === u && styles.unitPillActive]}
+              onPress={() => setUnit(u)}
+            >
+              <Text style={[styles.unitPillText, unit === u && styles.unitPillTextActive]}>{u}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <Text style={styles.label}>Time</Text>
-        <TouchableOpacity
-          style={styles.dateButton}
-          onPress={() => setShowTimePicker(true)}
-        >
-          <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.teal} />
-          <Text style={styles.dateButtonText}>{formatTime(time)}</Text>
+        <TouchableOpacity style={styles.input} onPress={() => setShowTimePicker(true)}>
+          <Text style={styles.inputText}>{formatTime(time)}</Text>
         </TouchableOpacity>
         {showTimePicker && (
           <DateTimePicker
@@ -128,16 +142,18 @@ export default function AddMedicineScreen() {
           />
         )}
 
-        <Text style={styles.label}>Notes (Optional)</Text>
+        <Text style={styles.label}>Notes</Text>
         <TextInput
-          style={[styles.input, styles.notesInput]}
-          placeholder="Any additional notes..."
+          style={styles.input}
           value={notes}
           onChangeText={setNotes}
-          multiline
-          numberOfLines={4}
           placeholderTextColor={theme.colors.textSecondary}
         />
+
+        <View style={styles.disclaimer}>
+          <Text style={styles.disclaimerTitle}>For recording only</Text>
+          <Text style={styles.disclaimerText}>MyBabySteps does not provide dosing advice.</Text>
+        </View>
 
         <PrimaryButton
           title={loading ? 'Saving...' : 'Save Medicine'}
@@ -158,42 +174,67 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.lg,
   },
   label: {
-    fontSize: theme.typography.label.fontSize,
-    fontWeight: theme.typography.label.fontWeight,
-    color: theme.colors.text,
+    fontSize: theme.typography.metadata.fontSize,
+    color: theme.colors.textSecondary,
     marginBottom: theme.spacing.sm,
   },
   input: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.input,
     marginBottom: theme.spacing.lg,
     backgroundColor: theme.colors.white,
     fontSize: theme.typography.body.fontSize,
     color: theme.colors.text,
+    minHeight: 48,
+    justifyContent: 'center',
   },
-  notesInput: {
-    minHeight: 100,
-    paddingTop: theme.spacing.md,
-    textAlignVertical: 'top',
+  inputText: {
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.text,
   },
-  dateButton: {
+  unitRow: {
     flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+  },
+  unitPill: {
+    flex: 1,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: 20,
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.white,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.input,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.white,
   },
-  dateButtonText: {
+  unitPillActive: {
+    backgroundColor: theme.colors.teal,
+    borderColor: theme.colors.teal,
+  },
+  unitPillText: {
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.textSecondary,
+  },
+  unitPillTextActive: {
+    color: theme.colors.white,
+  },
+  disclaimer: {
+    backgroundColor: theme.colors.yellow,
+    borderRadius: theme.borderRadius.card,
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
+  },
+  disclaimerTitle: {
     fontSize: theme.typography.body.fontSize,
+    fontWeight: '700' as const,
     color: theme.colors.text,
-    marginLeft: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
+  },
+  disclaimerText: {
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.textSecondary,
   },
   submitButton: {
     marginBottom: theme.spacing.xl,
