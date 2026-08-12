@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
 
@@ -7,13 +8,18 @@ interface HomeHeaderProps {
   parentName: string;
   babyName: string;
   babyAge: string;
+  babyAvatarUrl?: string | null;
 }
 
-export function HomeHeader({ parentName, babyName, babyAge }: HomeHeaderProps) {
+export function HomeHeader({ parentName, babyName, babyAge, babyAvatarUrl }: HomeHeaderProps) {
   return (
     <View style={styles.container}>
       <View style={styles.avatarPlaceholder}>
-        <MaterialCommunityIcons name="baby-face-outline" size={20} color={theme.colors.teal} />
+        {babyAvatarUrl ? (
+          <Image source={{ uri: babyAvatarUrl }} style={styles.avatarImage} contentFit="cover" />
+        ) : (
+          <MaterialCommunityIcons name="baby-face-outline" size={20} color={theme.colors.teal} />
+        )}
       </View>
       <View style={styles.textContent}>
         <Text style={styles.greeting}>Good morning,</Text>
@@ -40,6 +46,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   textContent: {
     flex: 1,

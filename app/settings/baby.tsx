@@ -1,127 +1,188 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useBaby } from '@/hooks/useBaby';
-import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
+import { formatDate } from '@/lib/utils/dateUtils';
+import { Header } from '@/components/ui/Header';
+import { PrimaryButton } from '@/components/ui/PrimaryButton';
+
+const STORAGE_BUCKET = 'photos';
 
 export default function BabySettingsScreen() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const { baby } = useBaby();
+  const { baby, updateBaby } = useBaby();
   const [name, setName] = useState(baby?.name || '');
-  const [dateOfBirth, setDateOfBirth] = useState(baby?.date_of_birth?.split('T')[0] || '');
+  const [dateOfBirth, setDateOfBirth] = useState(
+    baby?.date_of_birth ? new Date(baby.date_of_birth) : new Date()
+  );
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [birthWeight, setBirthWeight] = useState(baby?.birth_weight != null ? String(baby.birth_weight) : '');
+  const [birthLength, setBirthLength] = useState(baby?.birth_length != null ? String(baby.birth_length) : '');
+  const [avatarUrl, setAvatarUrl] = useState(baby?.avatar_url || null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  const handleSave = async () => {
+  async function handleEditPhoto() {
+    if (!baby) return;
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Photo library access is required to change the photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    setIsUploadingPhoto(true);
+    try {
+      const response = await fetch(asset.uri);
+      const arrayBuffer = await response.arrayBuffer();
+      const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `${baby.id}/avatar-${Date.now()}.${fileExt}`;
+      const contentType = asset.mimeType || `image/${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(fileName, arrayBuffer, { contentType });
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+
+      setAvatarUrl(publicUrl);
+
+      const { error } = await updateBaby(baby.id, { avatar_url: publicUrl });
+      if (error) throw error;
+    } catch (error) {
+      Alert.alert('Error', (error as any)?.message || 'Failed to update photo');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!baby) return;
+
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter baby name');
       return;
     }
 
-    if (!dateOfBirth.trim()) {
-      Alert.alert('Error', 'Please enter date of birth');
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('babies')
-        .update({
-          name: name.trim(),
-          date_of_birth: dateOfBirth,
-        })
-        .eq('id', baby?.id);
+      const { error } = await updateBaby(baby.id, {
+        name: name.trim(),
+        date_of_birth: dateOfBirth.toISOString().split('T')[0],
+        birth_weight: birthWeight.trim() ? parseFloat(birthWeight) : undefined,
+        birth_length: birthLength.trim() ? parseFloat(birthLength) : undefined,
+      });
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['baby'] });
-      Alert.alert('Success', 'Baby profile updated');
-      safeBack(router, '/settings');
+      Alert.alert('Success', 'Baby profile updated', [
+        { text: 'OK', onPress: () => safeBack(router, '/settings') },
+      ]);
     } catch (error) {
       Alert.alert('Error', 'Failed to update baby profile');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => safeBack(router, '/settings')}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <Header title="Baby Profile" leftLabel="‹" leftAction={() => safeBack(router, '/settings')} />
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.photoSection}>
+          <TouchableOpacity onPress={handleEditPhoto} disabled={isUploadingPhoto} style={styles.photoCircle}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.photoImage} contentFit="cover" />
+            ) : null}
           </TouchableOpacity>
-          <Text style={styles.title}>Baby Profile</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
-        {/* Form */}
-        <View style={styles.form}>
-          {/* Name Field */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Baby Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter baby name"
-              value={name}
-              onChangeText={setName}
-              editable={!isLoading}
-            />
-          </View>
-
-          {/* Date of Birth Field */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Date of Birth (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-              editable={!isLoading}
-            />
-          </View>
-
-          {/* Save Button */}
-          <TouchableOpacity
-            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={theme.colors.white} />
-            ) : (
-              <>
-                <MaterialCommunityIcons name="check" size={20} color={theme.colors.white} />
-                <Text style={styles.saveButtonText}>Save Changes</Text>
-              </>
-            )}
+          <TouchableOpacity onPress={handleEditPhoto} disabled={isUploadingPhoto}>
+            <Text style={styles.editPhotoLink}>
+              {isUploadingPhoto ? 'Uploading...' : 'Edit photo'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Info Section */}
-        <View style={styles.infoSection}>
-          <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.teal} />
-          <Text style={styles.infoText}>
-            Update your baby&apos;s information. This will be reflected throughout the app.
-          </Text>
+        <Text style={styles.label}>Name</Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          editable={!isLoading}
+          placeholderTextColor={theme.colors.textSecondary}
+        />
+
+        <Text style={styles.label}>Date of birth</Text>
+        <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+          <Text style={styles.inputText}>{formatDate(dateOfBirth)}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={dateOfBirth}
+            mode="date"
+            display="spinner"
+            maximumDate={new Date()}
+            onChange={(event, selected) => {
+              setShowDatePicker(false);
+              if (selected) setDateOfBirth(selected);
+            }}
+          />
+        )}
+
+        <Text style={styles.label}>Birth weight</Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.inputRowField}
+            value={birthWeight}
+            onChangeText={setBirthWeight}
+            keyboardType="decimal-pad"
+            placeholder="0.0"
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          <Text style={styles.inputSuffix}>kg</Text>
         </View>
+
+        <Text style={styles.label}>Birth length</Text>
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.inputRowField}
+            value={birthLength}
+            onChangeText={setBirthLength}
+            keyboardType="decimal-pad"
+            placeholder="0"
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          <Text style={styles.inputSuffix}>cm</Text>
+        </View>
+
+        <PrimaryButton
+          title={isLoading ? 'Saving...' : 'Save Changes'}
+          onPress={handleSave}
+          loading={isLoading}
+          disabled={isLoading}
+          style={styles.saveButton}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -132,77 +193,75 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  scrollView: {
+  content: {
     flex: 1,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
   },
-  header: {
-    flexDirection: 'row',
+  photoSection: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: theme.colors.text,
+  photoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.peach,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.md,
   },
-  form: {
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.card,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.small,
+  photoImage: {
+    width: '100%',
+    height: '100%',
   },
-  formGroup: {
-    marginBottom: theme.spacing.lg,
-  },
-  label: {
+  editPhotoLink: {
     fontSize: theme.typography.body.fontSize,
     fontWeight: '600' as const,
-    color: theme.colors.text,
+    color: theme.colors.teal,
+  },
+  label: {
+    fontSize: theme.typography.metadata.fontSize,
+    color: theme.colors.textSecondary,
     marginBottom: theme.spacing.sm,
   },
   input: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.input,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.input,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.white,
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.text,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  inputText: {
     fontSize: theme.typography.body.fontSize,
     color: theme.colors.text,
   },
-  saveButton: {
+  inputRow: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.teal,
-    borderRadius: theme.borderRadius.button,
-    paddingVertical: theme.spacing.md,
-    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.input,
+    marginBottom: theme.spacing.lg,
+    backgroundColor: theme.colors.white,
+    minHeight: 48,
     gap: theme.spacing.sm,
-    marginTop: theme.spacing.lg,
   },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600' as const,
-    color: theme.colors.white,
-  },
-  infoSection: {
-    backgroundColor: theme.colors.teal + '10',
-    borderRadius: theme.borderRadius.card,
-    padding: theme.spacing.md,
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-  },
-  infoText: {
+  inputRowField: {
     flex: 1,
-    fontSize: 13,
-    color: theme.colors.teal,
-    fontWeight: '500' as const,
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.text,
+    padding: 0,
+  },
+  inputSuffix: {
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.textSecondary,
+  },
+  saveButton: {
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
   },
 });

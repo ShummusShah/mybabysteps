@@ -70,6 +70,7 @@ export default function HomeScreen() {
           parentName={profile?.display_name?.split(' ')[0] || 'Parent'}
           babyName={baby?.name || 'Baby'}
           babyAge={baby ? formatBabyAge(baby.date_of_birth) : ''}
+          babyAvatarUrl={baby?.avatar_url}
         />
 
         <View style={styles.cardsSection}>
