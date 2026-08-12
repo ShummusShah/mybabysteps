@@ -12,6 +12,7 @@ export default function PhotosLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="add" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 }

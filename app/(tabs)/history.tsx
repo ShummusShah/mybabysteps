@@ -58,7 +58,8 @@ export default function HistoryScreen() {
     else if (item.type === 'medicine') router.push(`/medicine/${item.id}`);
     else if (item.type === 'temperature') router.push(`/temperature/${item.id}`);
     else if (item.type === 'milestone') router.push(`/milestones/${item.id}`);
-    // growth and photo have no detail screen yet
+    else if (item.type === 'growth') router.push(`/growth/${item.id}`);
+    else if (item.type === 'photo') router.push(`/photos/${item.id}`);
   }
 
   return (

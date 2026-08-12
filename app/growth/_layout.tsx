@@ -11,6 +11,7 @@ export default function GrowthLayout() {
       }}
     >
       <Stack.Screen name="add" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 }

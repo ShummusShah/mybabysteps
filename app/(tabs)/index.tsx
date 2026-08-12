@@ -127,7 +127,8 @@ export default function HomeScreen() {
             else if (item.type === 'medicine') router.push(`/medicine/${item.rawData.id}`);
             else if (item.type === 'temperature') router.push(`/temperature/${item.rawData.id}`);
             else if (item.type === 'milestone') router.push(`/milestones/${item.rawData.id}`);
-            // growth and photo have no detail screen yet
+            else if (item.type === 'growth') router.push(`/growth/${item.rawData.id}`);
+            else if (item.type === 'photo') router.push(`/photos/${item.rawData.id}`);
           }}
         />
       </ScrollView>
