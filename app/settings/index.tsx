@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBaby } from '@/hooks/useBaby';
 import { useStore } from '@/stores/useStore';
 import { theme } from '@/constants/theme';
+import { safeBack } from '@/lib/utils/navigation';
 
 interface SettingsItem {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -87,7 +88,7 @@ export default function SettingsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+            onPress={() => safeBack(router, '/(tabs)/profile')}
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text} />
           </TouchableOpacity>
