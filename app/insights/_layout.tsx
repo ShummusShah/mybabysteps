@@ -11,6 +11,7 @@ export default function InsightsDetailLayout() {
       }}
     >
       <Stack.Screen name="sleep" />
+      <Stack.Screen name="growth" />
     </Stack>
   );
 }

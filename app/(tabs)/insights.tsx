@@ -103,7 +103,11 @@ export default function InsightsScreen() {
                 </View>
               </View>
 
-              <View style={styles.tile}>
+              <TouchableOpacity
+                style={styles.tile}
+                onPress={() => router.push('/insights/growth')}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.tileLabel}>Weight change</Text>
                 <Text style={styles.tileValue}>
                   {weightChangeKgPerWeek != null
@@ -113,7 +117,7 @@ export default function InsightsScreen() {
                 <View style={styles.tileBarTrack}>
                   <View style={[styles.tileBarFill, { width: '50%', backgroundColor: theme.colors.success }]} />
                 </View>
-              </View>
+              </TouchableOpacity>
             </View>
 
             {sleepInsight && (
