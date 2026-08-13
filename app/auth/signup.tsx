@@ -51,7 +51,7 @@ export default function SignupScreen() {
         return;
       }
 
-      router.replace('/onboarding' as any);
+      router.replace('/onboarding/baby-details' as any);
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred');
     } finally {

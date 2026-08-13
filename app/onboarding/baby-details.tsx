@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -15,15 +16,13 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
-import { Header } from '@/components/ui/Header';
-import { useStore } from '@/stores/useStore';
 import { useBaby } from '@/hooks/useBaby';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const babyDetailsSchema = z.object({
   name: z.string().min(1, 'Baby name is required'),
@@ -94,14 +93,12 @@ export default function BabyDetailsScreen() {
 
       if (error) {
         const errorMessage = (error as any)?.message || JSON.stringify(error);
-        console.error('Baby creation error:', error);
         Alert.alert('Error', `Failed to create baby profile: ${errorMessage}`);
         return;
       }
 
-      router.push('/onboarding/units');
+      router.push('/onboarding/tracking-preferences');
     } catch (error) {
-      console.error('Unexpected error:', error);
       Alert.alert('Error', `An unexpected error occurred: ${(error as any)?.message}`);
     } finally {
       setLoading(false);
@@ -110,20 +107,28 @@ export default function BabyDetailsScreen() {
 
   return (
     <ScreenContainer scrollable>
-      <Header leftAction={() => safeBack(router, '/onboarding/welcome')} title="Baby Details" />
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => safeBack(router, '/auth/welcome')}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <MaterialCommunityIcons name="chevron-left" size={28} color={theme.colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Tell us about your baby</Text>
+        <Text style={styles.subtitle}>You can change these details later.</Text>
+      </View>
 
-      <View style={styles.form}>
+      <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
         <View style={styles.avatarSection}>
           <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
             {avatarUri ? (
               <Image source={{ uri: avatarUri }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <MaterialCommunityIcons name="baby-face" size={40} color={theme.colors.teal} />
+                <MaterialCommunityIcons name="plus" size={32} color={theme.colors.teal} />
               </View>
             )}
           </TouchableOpacity>
-          <Text style={styles.avatarHint}>Tap to add photo</Text>
         </View>
 
         <Controller
@@ -131,7 +136,7 @@ export default function BabyDetailsScreen() {
           name="name"
           render={({ field: { onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Baby's Name</Text>
+              <Text style={styles.label}>Baby's name</Text>
               <TextInput
                 style={[styles.input, errors.name && styles.errorInput]}
                 placeholder="e.g. Leo"
@@ -149,7 +154,7 @@ export default function BabyDetailsScreen() {
           name="dateOfBirth"
           render={({ field: { onChange } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Date of Birth</Text>
+              <Text style={styles.label}>Date of birth</Text>
               <TouchableOpacity
                 style={[styles.dateInput, errors.dateOfBirth && styles.errorInput]}
                 onPress={() => setShowDatePicker(true)}
@@ -194,7 +199,7 @@ export default function BabyDetailsScreen() {
                     selectedSex === sex && styles.sexButtonTextActive,
                   ]}
                 >
-                  {sex === 'male' ? 'Boy' : sex === 'female' ? 'Girl' : "Prefer not to say"}
+                  {sex === 'male' ? 'Boy' : sex === 'female' ? 'Girl' : 'Prefer not to say'}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -207,13 +212,30 @@ export default function BabyDetailsScreen() {
           loading={loading}
           style={styles.submitButton}
         />
-      </View>
+      </ScrollView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+  },
+  title: {
+    fontSize: theme.typography.sectionTitle.fontSize,
+    fontWeight: '700' as const,
+    color: theme.colors.text,
+    marginTop: theme.spacing.sm,
+  },
+  subtitle: {
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
+  },
   form: {
+    flex: 1,
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.xl,
   },
   avatarSection: {
@@ -235,10 +257,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.mint,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  avatarHint: {
-    fontSize: theme.typography.metadata.fontSize,
-    color: theme.colors.textSecondary,
   },
   field: {
     marginBottom: theme.spacing.lg,
@@ -284,30 +302,32 @@ const styles = StyleSheet.create({
   },
   sexButtonsContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   sexButton: {
     flex: 1,
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.input,
     alignItems: 'center',
+    backgroundColor: theme.colors.white,
   },
   sexButtonActive: {
-    backgroundColor: theme.colors.teal,
+    backgroundColor: theme.colors.mint,
     borderColor: theme.colors.teal,
   },
   sexButtonText: {
-    fontSize: theme.typography.body.fontSize,
+    fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
   },
   sexButtonTextActive: {
-    color: theme.colors.white,
+    color: theme.colors.teal,
   },
   submitButton: {
     marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.xl,
   },
 });

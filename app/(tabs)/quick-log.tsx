@@ -6,32 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
 import { useStore } from '@/stores/useStore';
-
-const iconMap: Record<string, string> = {
-  feed: 'bottle-soda',
-  sleep: 'sleep',
-  nappy: 'water',
-  pump: 'water-pump',
-  tummy: 'baby-face',
-  medicine: 'pill',
-  temperature: 'thermometer',
-  growth: 'scale',
-  milestone: 'star',
-  photo: 'camera',
-};
-
-const typeColors: Record<string, { bg: string; accent: string }> = {
-  feed: { bg: theme.colors.mint, accent: theme.colors.teal },
-  sleep: { bg: theme.colors.lavender, accent: theme.colors.purple },
-  nappy: { bg: theme.colors.peach, accent: theme.colors.orange },
-  pump: { bg: theme.colors.pink, accent: theme.colors.pinkAccent },
-  tummy: { bg: theme.colors.yellow, accent: theme.colors.yellowAccent },
-  medicine: { bg: theme.colors.pink, accent: theme.colors.pinkAccent },
-  temperature: { bg: theme.colors.mint, accent: theme.colors.teal },
-  growth: { bg: theme.colors.lavender, accent: theme.colors.purple },
-  milestone: { bg: theme.colors.yellow, accent: theme.colors.yellowAccent },
-  photo: { bg: theme.colors.peach, accent: theme.colors.orange },
-};
+import { moduleIcons, moduleLabels, moduleColors, QuickLogModuleType } from '@/lib/utils/moduleColors';
 
 const routeMap: Record<string, string> = {
   feed: '/feed/add',
@@ -70,43 +45,23 @@ export default function QuickLogScreen() {
 
         <View style={styles.grid}>
           {enabledModules.map((module: any) => {
-            const displayName =
-              module.type === 'tummy'
-                ? 'Tummy Time'
-                : module.type === 'feed'
-                  ? 'Feed'
-                  : module.type === 'sleep'
-                    ? 'Sleep'
-                    : module.type === 'nappy'
-                      ? 'Nappy'
-                      : module.type === 'pump'
-                        ? 'Pump'
-                        : module.type === 'medicine'
-                          ? 'Medicine'
-                          : module.type === 'temperature'
-                            ? 'Temperature'
-                            : module.type === 'growth'
-                              ? 'Growth'
-                              : module.type === 'milestone'
-                                ? 'Milestone'
-                                : 'Photo';
-
-            const colors = typeColors[module.type] || { bg: theme.colors.mint, accent: theme.colors.teal };
+            const type = module.type as QuickLogModuleType;
+            const colors = moduleColors[type] || { bg: theme.colors.mint, accent: theme.colors.teal };
 
             return (
               <TouchableOpacity
-                key={module.type}
+                key={type}
                 style={[styles.gridItem, { backgroundColor: colors.bg }]}
-                onPress={() => router.push(routeMap[module.type] as any)}
+                onPress={() => router.push(routeMap[type] as any)}
               >
                 <View style={styles.gridItemIcon}>
                   <MaterialCommunityIcons
-                    name={iconMap[module.type] as any}
+                    name={moduleIcons[type] as any}
                     size={32}
                     color={colors.accent}
                   />
                 </View>
-                <Text style={styles.gridItemLabel}>{displayName}</Text>
+                <Text style={styles.gridItemLabel}>{moduleLabels[type]}</Text>
               </TouchableOpacity>
             );
           })}

@@ -132,11 +132,11 @@ export function useAuth() {
         if (hasBaby) {
           router.replace('/' as any);
         } else {
-          router.replace('/onboarding' as any);
+          router.replace('/onboarding/baby-details' as any);
         }
       } else if (!inOnboardingGroup && !hasBaby) {
         // User signed in with no baby, need onboarding
-        router.replace('/onboarding' as any);
+        router.replace('/onboarding/baby-details' as any);
       }
     } else if (!isSignedIn && !inAuthGroup) {
       // User not signed in, go to auth

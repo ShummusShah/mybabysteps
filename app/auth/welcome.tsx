@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { theme } from '@/constants/theme';
@@ -11,29 +12,30 @@ export default function WelcomeScreen() {
   return (
     <ScreenContainer>
       <View style={styles.container}>
-        <View style={styles.content}>
-          <View style={styles.headerSection}>
-            <Text style={styles.emoji}>👶</Text>
-            <Text style={styles.title}>MyBabySteps</Text>
-            <Text style={styles.subtitle}>Everything about your little one, in one place</Text>
-          </View>
+        <Text style={styles.brand}>MyBabySteps</Text>
 
-          <View style={styles.spacer} />
+        <Text style={styles.headline}>Every little moment,{'\n'}all in one place.</Text>
 
-          <View style={styles.buttonContainer}>
-            <PrimaryButton
-              title="Get Started"
-              onPress={() => router.push('/auth/signup')}
-              style={styles.button}
-            />
+        <Text style={styles.subtitle}>
+          Track feeds, sleep, nappies, growth and memories without the clutter.
+        </Text>
 
-            <PrimaryButton
-              title="I already have an account"
-              onPress={() => router.push('/auth/login')}
-              variant="secondary"
-              style={styles.button}
-            />
-          </View>
+        <View style={styles.hero}>
+          <MaterialCommunityIcons name="heart-outline" size={56} color={theme.colors.teal} />
+        </View>
+
+        <View style={styles.spacer} />
+
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            title="Get Started"
+            onPress={() => router.push('/auth/signup')}
+            style={styles.button}
+          />
+
+          <TouchableOpacity onPress={() => router.push('/auth/login')} style={styles.loginLink}>
+            <Text style={styles.loginLinkText}>I already have an account</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScreenContainer>
@@ -43,40 +45,52 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
+    paddingTop: theme.spacing.xxl,
     paddingBottom: theme.spacing.xl,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'space-between',
+  brand: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: theme.colors.teal,
+    marginBottom: theme.spacing.lg,
   },
-  headerSection: {
-    alignItems: 'center',
-    paddingTop: theme.spacing.xxl * 2,
-  },
-  emoji: {
-    fontSize: 80,
-    marginBottom: theme.spacing.xl,
-  },
-  title: {
-    fontSize: 32,
+  headline: {
+    fontSize: 34,
     fontWeight: '700' as const,
     color: theme.colors.text,
+    lineHeight: 40,
     marginBottom: theme.spacing.md,
   },
   subtitle: {
-    fontSize: theme.typography.cardHeadline.fontSize,
+    fontSize: theme.typography.body.fontSize,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    maxWidth: 280,
+    lineHeight: 22,
+    marginBottom: theme.spacing.xl,
+  },
+  hero: {
+    flex: 1,
+    minHeight: 220,
+    backgroundColor: theme.colors.mint,
+    borderRadius: theme.borderRadius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   spacer: {
-    flex: 1,
+    height: theme.spacing.xl,
   },
   buttonContainer: {
     gap: theme.spacing.md,
   },
   button: {
     width: '100%',
+  },
+  loginLink: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+  },
+  loginLinkText: {
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600' as const,
+    color: theme.colors.teal,
   },
 });
