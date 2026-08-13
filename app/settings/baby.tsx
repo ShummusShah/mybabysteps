@@ -32,24 +32,24 @@ export default function BabySettingsScreen() {
   async function handleEditPhoto() {
     if (!baby) return;
 
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission needed', 'Photo library access is required to change the photo.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-      allowsEditing: true,
-      aspect: [1, 1],
-    });
-
-    if (result.canceled || !result.assets?.[0]) return;
-
-    const asset = result.assets[0];
     setIsUploadingPhoto(true);
     try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission needed', 'Photo library access is required to change the photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const asset = result.assets[0];
       const response = await fetch(asset.uri);
       const arrayBuffer = await response.arrayBuffer();
       const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';

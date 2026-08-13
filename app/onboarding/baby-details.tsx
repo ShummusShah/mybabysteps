@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -39,6 +40,7 @@ export default function BabyDetailsScreen() {
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [pickingImage, setPickingImage] = useState(false);
   const [selectedSex, setSelectedSex] = useState<'male' | 'female' | 'prefer_not_to_say' | null>(
     null
   );
@@ -60,15 +62,28 @@ export default function BabyDetailsScreen() {
   const dateOfBirth = watch('dateOfBirth');
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+    setPickingImage(true);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission needed', 'Photo library access is required to add a photo.');
+        return;
+      }
 
-    if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        setAvatarUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      Alert.alert('Error', (error as any)?.message || 'Could not open photo library');
+    } finally {
+      setPickingImage(false);
     }
   };
 
@@ -141,12 +156,20 @@ export default function BabyDetailsScreen() {
 
       <ScrollView style={styles.form} showsVerticalScrollIndicator={false}>
         <View style={styles.avatarSection}>
-          <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            onPress={pickImage}
+            disabled={pickingImage}
+          >
             {avatarUri ? (
               <Image source={{ uri: avatarUri }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <MaterialCommunityIcons name="plus" size={32} color={theme.colors.teal} />
+                {pickingImage ? (
+                  <ActivityIndicator color={theme.colors.teal} />
+                ) : (
+                  <MaterialCommunityIcons name="plus" size={32} color={theme.colors.teal} />
+                )}
               </View>
             )}
           </TouchableOpacity>
