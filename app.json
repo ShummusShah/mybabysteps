@@ -10,14 +10,20 @@
     "ios": {
       "bundleIdentifier": "com.mybabysteps.app",
       "supportsTabletMode": true,
-      "requiresFullScreen": false
+      "requiresFullScreen": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.mybabysteps.app",
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFB",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -52,6 +58,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b4a5f9c7-3ff5-4b63-9be9-6b91cdc97e7b"
+      }
+    },
+    "owner": "shum13"
   }
 }
