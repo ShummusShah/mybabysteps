@@ -4,16 +4,12 @@ import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as WebBrowser from 'expo-web-browser';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Header } from '@/components/ui/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
-
-const PRIVACY_POLICY_URL = 'https://claude.ai/code/artifact/5e6c7cdb-1497-4c4b-8180-260a46c5dda7';
-const TERMS_OF_SERVICE_URL = 'https://claude.ai/code/artifact/b1fc8214-9bdf-4f3f-951b-10ec12c7e4d2';
 
 const signupSchema = z
   .object({
@@ -204,11 +200,11 @@ export default function SignupScreen() {
 
         <Text style={styles.consentText}>
           By creating an account, you agree to our{' '}
-          <Text style={styles.consentLink} onPress={() => WebBrowser.openBrowserAsync(TERMS_OF_SERVICE_URL)}>
+          <Text style={styles.consentLink} onPress={() => router.push('/legal/terms')}>
             Terms of Service
           </Text>{' '}
           and{' '}
-          <Text style={styles.consentLink} onPress={() => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL)}>
+          <Text style={styles.consentLink} onPress={() => router.push('/legal/privacy')}>
             Privacy Policy
           </Text>
           .
