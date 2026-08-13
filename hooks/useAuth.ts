@@ -195,24 +195,36 @@ export function useAuth() {
       if (error) throw error;
 
       if (!data.session) {
-        // signUp() returns no error even when the email is already
-        // registered — Supabase avoids leaking which emails exist by
-        // silently no-oping instead. A missing session here means either
-        // that, or (if email confirmation is ever re-enabled) confirmation
-        // is pending. Either way there's no authenticated session yet, so
-        // profile/household creation can't happen now.
-        throw new Error(
-          'Could not create your account. If you already have an account with this email, please log in instead.'
-        );
+        // signUp() returns no error and no session both for a genuine new
+        // signup pending email confirmation AND for an already-registered
+        // email (Supabase no-ops silently rather than leaking which emails
+        // exist). `data.user.identities` would distinguish the two, but
+        // this project's client response doesn't include it, so both cases
+        // are treated the same: show "check your email". A duplicate-email
+        // signup just won't receive a new email, and can use "Back to Log
+        // In" on that screen instead. Profile/household creation waits
+        // until the user confirms and logs in (fetchProfile/createBaby
+        // self-heal at that point).
+        return { data, error: null, needsConfirmation: true };
       }
 
       // Profile is self-healed by fetchProfile() on the auth state change
       // this triggers, and the household is created by useBaby.createBaby()
       // once the user actually adds their baby during onboarding — both
       // run against this fresh, genuinely authenticated session.
-      return { data, error: null };
+      return { data, error: null, needsConfirmation: false };
     } catch (error) {
-      return { data: null, error };
+      return { data: null, error, needsConfirmation: false };
+    }
+  }
+
+  async function resendConfirmationEmail(email: string) {
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email });
+      if (error) throw error;
+      return { success: true, error: null };
+    } catch (error) {
+      return { success: false, error };
     }
   }
 
@@ -256,6 +268,7 @@ export function useAuth() {
     loading,
     isSignedIn,
     signUpWithEmail,
+    resendConfirmationEmail,
     signInWithEmail,
     signOut,
     resetPassword,

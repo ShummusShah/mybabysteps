@@ -36,7 +36,15 @@ export default function LoginScreen() {
       const { data: authData, error } = await signInWithEmail(data.email, data.password);
 
       if (error) {
-        Alert.alert('Error', (error as any)?.message || 'Failed to log in');
+        const message = (error as any)?.message || 'Failed to log in';
+        // Supabase returns this same generic message both for a wrong
+        // password and for an unconfirmed account, to avoid leaking which
+        // is the case — so the hint below covers both possibilities.
+        const hint =
+          message === 'Invalid login credentials'
+            ? `${message}. If you just signed up, check your email for a confirmation link first.`
+            : message;
+        Alert.alert('Error', hint);
         return;
       }
 

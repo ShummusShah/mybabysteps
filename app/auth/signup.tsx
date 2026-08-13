@@ -27,8 +27,10 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { signUpWithEmail } = useAuth();
+  const { signUpWithEmail, resendConfirmationEmail } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const {
     control,
     handleSubmit,
@@ -40,7 +42,7 @@ export default function SignupScreen() {
   async function onSubmit(data: SignupFormData) {
     setLoading(true);
     try {
-      const { data: authData, error } = await signUpWithEmail(
+      const { error, needsConfirmation } = await signUpWithEmail(
         data.email,
         data.password,
         data.displayName
@@ -51,12 +53,57 @@ export default function SignupScreen() {
         return;
       }
 
+      if (needsConfirmation) {
+        setPendingEmail(data.email);
+        return;
+      }
+
       router.replace('/onboarding/baby-details' as any);
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResend() {
+    if (!pendingEmail) return;
+    setResending(true);
+    try {
+      const { success, error } = await resendConfirmationEmail(pendingEmail);
+      if (!success) {
+        Alert.alert('Error', (error as any)?.message || 'Failed to resend email');
+        return;
+      }
+      Alert.alert('Sent', 'Confirmation email resent.');
+    } finally {
+      setResending(false);
+    }
+  }
+
+  if (pendingEmail) {
+    return (
+      <ScreenContainer>
+        <Header leftAction={() => safeBack(router, '/auth/welcome')} />
+        <View style={styles.successContainer}>
+          <Text style={styles.successEmoji}>✉️</Text>
+          <Text style={styles.successTitle}>Check your email</Text>
+          <Text style={styles.successText}>
+            We&apos;ve sent a confirmation link to {pendingEmail}. Follow the link to activate
+            your account, then come back and log in.
+          </Text>
+          <PrimaryButton
+            title="Resend Email"
+            onPress={handleResend}
+            loading={resending}
+            style={styles.button}
+          />
+          <TouchableOpacity onPress={() => router.replace('/auth/login')} style={styles.loginLink}>
+            <Text style={styles.footerLink}>Back to Log In</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenContainer>
+    );
   }
 
   return (
@@ -210,5 +257,37 @@ const styles = StyleSheet.create({
     color: theme.colors.teal,
     fontWeight: '600' as const,
     fontSize: theme.typography.body.fontSize,
+  },
+  successContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  successEmoji: {
+    fontSize: 64,
+    marginBottom: theme.spacing.lg,
+  },
+  successTitle: {
+    fontSize: theme.typography.screenTitle.fontSize,
+    fontWeight: theme.typography.screenTitle.fontWeight,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.md,
+    textAlign: 'center',
+  },
+  successText: {
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xxl,
+    lineHeight: 22,
+  },
+  button: {
+    width: '100%',
+  },
+  loginLink: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+    marginTop: theme.spacing.md,
   },
 });
