@@ -101,10 +101,46 @@ export function useAuth() {
       }
 
       // Check if user has a baby
-      const { data: householdMembers } = await supabase
+      let { data: householdMembers } = await supabase
         .from('household_members')
         .select('household_id')
         .eq('user_id', userId);
+
+      // A user with no household of their own may have been invited as a
+      // caregiver to an existing baby's household. Auto-accept any pending
+      // invites for their email so they land straight in the app instead of
+      // being sent through baby-creation onboarding.
+      if ((!householdMembers || householdMembers.length === 0) && profileData?.email) {
+        const { data: pendingInvites } = await supabase
+          .from('household_invites')
+          .select('*')
+          .eq('email', profileData.email)
+          .eq('status', 'pending');
+
+        if (pendingInvites && pendingInvites.length > 0) {
+          for (const invite of pendingInvites) {
+            const { error: memberInsertError } = await supabase.from('household_members').insert({
+              household_id: invite.household_id,
+              user_id: userId,
+              role: invite.role,
+            });
+
+            if (!memberInsertError) {
+              await supabase
+                .from('household_invites')
+                .update({ status: 'accepted', responded_at: new Date().toISOString() })
+                .eq('id', invite.id);
+            }
+          }
+
+          const { data: refreshedMembers } = await supabase
+            .from('household_members')
+            .select('household_id')
+            .eq('user_id', userId);
+
+          householdMembers = refreshedMembers;
+        }
+      }
 
       if (householdMembers && householdMembers.length > 0) {
         const householdIds = householdMembers.map((m) => m.household_id);
@@ -158,36 +194,22 @@ export function useAuth() {
 
       if (error) throw error;
 
-      if (data.user) {
-        // Create profile
-        await supabase.from('profiles').insert({
-          id: data.user.id,
-          email,
-          display_name: displayName,
-        });
-
-        // Create household for the user
-        const { data: householdData, error: householdError } = await supabase
-          .from('households')
-          .insert({
-            name: `${displayName}'s Household`,
-            owner_user_id: data.user.id,
-          })
-          .select()
-          .single();
-
-        if (householdError) throw householdError;
-
-        // Add user to household
-        if (householdData) {
-          await supabase.from('household_members').insert({
-            household_id: householdData.id,
-            user_id: data.user.id,
-            role: 'owner',
-          });
-        }
+      if (!data.session) {
+        // signUp() returns no error even when the email is already
+        // registered — Supabase avoids leaking which emails exist by
+        // silently no-oping instead. A missing session here means either
+        // that, or (if email confirmation is ever re-enabled) confirmation
+        // is pending. Either way there's no authenticated session yet, so
+        // profile/household creation can't happen now.
+        throw new Error(
+          'Could not create your account. If you already have an account with this email, please log in instead.'
+        );
       }
 
+      // Profile is self-healed by fetchProfile() on the auth state change
+      // this triggers, and the household is created by useBaby.createBaby()
+      // once the user actually adds their baby during onboarding — both
+      // run against this fresh, genuinely authenticated session.
       return { data, error: null };
     } catch (error) {
       return { data: null, error };
