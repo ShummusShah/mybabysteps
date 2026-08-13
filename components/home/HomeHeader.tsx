@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '@/constants/theme';
+import { StorageImage } from '@/components/ui/StorageImage';
 
 interface HomeHeaderProps {
   parentName: string;
@@ -16,7 +16,7 @@ export function HomeHeader({ parentName, babyName, babyAge, babyAvatarUrl }: Hom
     <View style={styles.container}>
       <View style={styles.avatarPlaceholder}>
         {babyAvatarUrl ? (
-          <Image source={{ uri: babyAvatarUrl }} style={styles.avatarImage} contentFit="cover" />
+          <StorageImage path={babyAvatarUrl} style={styles.avatarImage} contentFit="cover" />
         ) : (
           <MaterialCommunityIcons name="baby-face-outline" size={20} color={theme.colors.teal} />
         )}

@@ -399,12 +399,10 @@ end $$;
 -- ============================================================================
 -- 11. Storage: photos bucket
 -- ============================================================================
--- The bucket is public=true (see phase3_milestones_photos_sharing.sql), so
--- reads via getPublicUrl already bypass RLS entirely — that's unchanged by
--- this migration and is still a "switch to a private bucket + signed URLs
--- before shipping to real users" item for later. What RLS *can* still lock
--- down is the storage API itself (upload/remove), scoped by the baby_id
--- folder each object lives under (uploadPhoto writes to `${baby.id}/...`).
+-- The bucket was public=true at the time this migration was written, so
+-- reads via getPublicUrl bypassed RLS entirely — insert/delete below were
+-- all RLS could lock down then. The bucket was later switched to private
+-- with a SELECT policy added; see private_photos_bucket.sql.
 
 drop policy if exists photos_bucket_insert on storage.objects;
 create policy photos_bucket_insert on storage.objects

@@ -10,13 +10,13 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { usePhotos } from '@/hooks/usePhotos';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
@@ -91,8 +91,8 @@ export default function PhotosScreen() {
                   onPress={() => setSelectedPhoto(photo)}
                   activeOpacity={0.8}
                 >
-                  <Image
-                    source={{ uri: photo.photo_url }}
+                  <StorageImage
+                    path={photo.photo_url}
                     style={styles.tileImage}
                     contentFit="cover"
                     transition={150}
@@ -117,8 +117,8 @@ export default function PhotosScreen() {
 
           {selectedPhoto && (
             <>
-              <Image
-                source={{ uri: selectedPhoto.photo_url }}
+              <StorageImage
+                path={selectedPhoto.photo_url}
                 style={styles.modalImage}
                 contentFit="contain"
               />

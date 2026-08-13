@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useBaby } from '@/hooks/useBaby';
 import { theme } from '@/constants/theme';
 import { formatBabyAge } from '@/lib/utils/dateUtils';
+import { StorageImage } from '@/components/ui/StorageImage';
 
 interface MenuRow {
   label: string;
@@ -55,7 +55,7 @@ export default function ProfileScreen() {
         <View style={styles.babyCard}>
           <View style={styles.babyAvatar}>
             {baby?.avatar_url && (
-              <Image source={{ uri: baby.avatar_url }} style={styles.babyAvatarImage} contentFit="cover" />
+              <StorageImage path={baby.avatar_url} style={styles.babyAvatarImage} contentFit="cover" />
             )}
           </View>
           <View style={styles.babyInfo}>

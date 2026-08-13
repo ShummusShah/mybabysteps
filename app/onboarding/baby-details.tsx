@@ -20,6 +20,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useBaby } from '@/hooks/useBaby';
+import { supabase } from '@/lib/auth/supabase';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
@@ -34,7 +35,7 @@ type BabyDetailsFormData = z.infer<typeof babyDetailsSchema>;
 
 export default function BabyDetailsScreen() {
   const router = useRouter();
-  const { createBaby } = useBaby();
+  const { createBaby, updateBaby } = useBaby();
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
@@ -88,13 +89,33 @@ export default function BabyDetailsScreen() {
         name: data.name,
         date_of_birth: data.dateOfBirth.toISOString().split('T')[0],
         sex: data.sex as any,
-        avatar_url: avatarUri || undefined,
       });
 
       if (error) {
         const errorMessage = (error as any)?.message || JSON.stringify(error);
         Alert.alert('Error', `Failed to create baby profile: ${errorMessage}`);
         return;
+      }
+
+      if (baby && avatarUri) {
+        try {
+          const response = await fetch(avatarUri);
+          const arrayBuffer = await response.arrayBuffer();
+          const fileExt = avatarUri.split('.').pop()?.toLowerCase() || 'jpg';
+          const fileName = `${baby.id}/avatar-${Date.now()}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('photos')
+            .upload(fileName, arrayBuffer, { contentType: `image/${fileExt}` });
+
+          if (!uploadError) {
+            await updateBaby(baby.id, { avatar_url: fileName });
+          }
+        } catch {
+          // A failed avatar upload shouldn't block onboarding — the baby
+          // profile itself was created successfully and a photo can be
+          // added later from the baby profile settings screen.
+        }
       }
 
       router.push('/onboarding/tracking-preferences');

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ScreenContainer } from '@/components/ui/ScreenContainer';
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { StorageImage } from '@/components/ui/StorageImage';
 import { supabase } from '@/lib/auth/supabase';
 import { theme } from '@/constants/theme';
 import { safeBack } from '@/lib/utils/navigation';
@@ -79,7 +79,7 @@ export default function PhotoDetailScreen() {
       <Header title="Photo" leftAction={() => safeBack(router, '/(tabs)')} />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: photo.photo_url }} style={styles.image} contentFit="cover" />
+        <StorageImage path={photo.photo_url} style={styles.image} contentFit="cover" />
 
         <View style={styles.card}>
           {photo.caption && (

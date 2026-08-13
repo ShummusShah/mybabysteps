@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/auth/supabase';
 import { PhotoLog } from '@/types';
+import { extractStoragePath } from '@/lib/utils/storagePath';
 import { useBaby } from './useBaby';
 
 const STORAGE_BUCKET = 'photos';
@@ -68,16 +69,12 @@ export function usePhotos() {
 
     if (uploadError) throw uploadError;
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
-
     const { data, error } = await supabase
       .from('photos')
       .insert({
         baby_id: baby.id,
         created_by: user.id,
-        photo_url: publicUrl,
+        photo_url: fileName,
         caption: caption || null,
         category: 'everyday',
         logged_at: new Date().toISOString(),
@@ -99,13 +96,11 @@ export function usePhotos() {
 
     // Best-effort cleanup of the stored file; ignore failures since the
     // record is already gone from the app's perspective.
-    const path = photo.photo_url.split(`${STORAGE_BUCKET}/`)[1];
-    if (path) {
-      try {
-        await supabase.storage.from(STORAGE_BUCKET).remove([path]);
-      } catch {
-        // ignore
-      }
+    const path = extractStoragePath(photo.photo_url, STORAGE_BUCKET);
+    try {
+      await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+    } catch {
+      // ignore
     }
 
     queryClient.invalidateQueries({ queryKey: ['photos', baby?.id] });

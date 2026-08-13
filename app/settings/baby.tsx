@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -12,6 +11,7 @@ import { safeBack } from '@/lib/utils/navigation';
 import { formatDate } from '@/lib/utils/dateUtils';
 import { Header } from '@/components/ui/Header';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
+import { StorageImage } from '@/components/ui/StorageImage';
 
 const STORAGE_BUCKET = 'photos';
 
@@ -62,13 +62,9 @@ export default function BabySettingsScreen() {
 
       if (uploadError) throw uploadError;
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+      setAvatarUrl(fileName);
 
-      setAvatarUrl(publicUrl);
-
-      const { error } = await updateBaby(baby.id, { avatar_url: publicUrl });
+      const { error } = await updateBaby(baby.id, { avatar_url: fileName });
       if (error) throw error;
     } catch (error) {
       Alert.alert('Error', (error as any)?.message || 'Failed to update photo');
@@ -114,7 +110,7 @@ export default function BabySettingsScreen() {
         <View style={styles.photoSection}>
           <TouchableOpacity onPress={handleEditPhoto} disabled={isUploadingPhoto} style={styles.photoCircle}>
             {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.photoImage} contentFit="cover" />
+              <StorageImage path={avatarUrl} style={styles.photoImage} contentFit="cover" />
             ) : null}
           </TouchableOpacity>
           <TouchableOpacity onPress={handleEditPhoto} disabled={isUploadingPhoto}>
