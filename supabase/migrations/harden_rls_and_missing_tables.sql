@@ -214,10 +214,17 @@ with check (id = auth.uid());
 -- 6. households
 -- ============================================================================
 
+-- owner_user_id = auth.uid() is included (not just is_household_member) so
+-- that createBaby()'s `insert(...).select().single()` on households can see
+-- its own newly-created row: Postgres enforces the SELECT policy on the
+-- RETURNING clause of an INSERT too, and at that point the household_members
+-- row linking the owner to this household doesn't exist yet (it's created in
+-- the very next statement) — is_household_member(id) alone would be false
+-- and the RETURNING would fail RLS, even though the INSERT itself is allowed.
 drop policy if exists households_select on public.households;
 create policy households_select on public.households
 for select
-using (public.is_household_member(id));
+using (public.is_household_member(id) or owner_user_id = auth.uid());
 
 drop policy if exists households_insert on public.households;
 create policy households_insert on public.households
