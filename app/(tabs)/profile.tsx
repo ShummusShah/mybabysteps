@@ -2,12 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useBaby } from '@/hooks/useBaby';
 import { theme } from '@/constants/theme';
 import { formatBabyAge } from '@/lib/utils/dateUtils';
 import { StorageImage } from '@/components/ui/StorageImage';
+
+const PRIVACY_POLICY_URL = 'https://claude.ai/code/artifact/5e6c7cdb-1497-4c4b-8180-260a46c5dda7';
+const TERMS_OF_SERVICE_URL = 'https://claude.ai/code/artifact/b1fc8214-9bdf-4f3f-951b-10ec12c7e4d2';
 
 interface MenuRow {
   label: string;
@@ -39,7 +43,8 @@ export default function ProfileScreen() {
     { label: 'Preferences', onPress: () => router.push('/settings/preferences') },
     { label: 'Reminders', onPress: () => router.push('/reminders') },
     { label: 'Subscription', onPress: () => Alert.alert('Coming Soon', 'Subscription management coming soon.') },
-    { label: 'Data & Privacy', onPress: () => Alert.alert('Coming Soon', 'Data export coming soon.') },
+    { label: 'Privacy Policy', onPress: () => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL) },
+    { label: 'Terms of Service', onPress: () => WebBrowser.openBrowserAsync(TERMS_OF_SERVICE_URL) },
     { label: 'Help & Support', onPress: () => Alert.alert('Help & Support', 'Contact us at support@mybabysteps.app') },
     {
       label: 'About MyBabySteps',
