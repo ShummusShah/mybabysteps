@@ -50,7 +50,6 @@ interface StoreState {
     heightUnit: 'cm' | 'inches';
     milkUnit: 'ml' | 'fl_oz';
     temperatureUnit: 'celsius' | 'fahrenheit';
-    timeFormat: '12h' | '24h';
     theme: 'light' | 'dark' | 'system';
   };
   setUserPreferences: (prefs: Partial<StoreState['userPreferences']>) => void;
@@ -103,7 +102,6 @@ export const useStore = create<StoreState>((set) => ({
     heightUnit: 'cm',
     milkUnit: 'ml',
     temperatureUnit: 'celsius',
-    timeFormat: '24h',
     theme: 'system',
   },
   setUserPreferences: (prefs: Partial<StoreState['userPreferences']>) => {
@@ -165,7 +163,6 @@ export const useStore = create<StoreState>((set) => ({
               heightUnit: 'cm',
               milkUnit: 'ml',
               temperatureUnit: 'celsius',
-              timeFormat: '24h',
               theme: 'system',
             },
         lastFeedTime: feedTimeStr ? parseInt(feedTimeStr) : null,

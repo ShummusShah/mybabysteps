@@ -72,7 +72,7 @@ const UnitModal = ({ visible, title, options, currentValue, onSelect, onClose, i
   </Modal>
 );
 
-type ModalKey = 'weight' | 'milk' | 'temperature' | 'timeFormat' | null;
+type ModalKey = 'weight' | 'milk' | 'temperature' | null;
 
 export default function PreferencesScreen() {
   const router = useRouter();
@@ -93,11 +93,6 @@ export default function PreferencesScreen() {
   const temperatureUnits: PreferenceOption[] = [
     { label: 'Celsius (°C)', value: 'celsius' },
     { label: 'Fahrenheit (°F)', value: 'fahrenheit' },
-  ];
-
-  const timeFormats: PreferenceOption[] = [
-    { label: '24-hour', value: '24h' },
-    { label: '12-hour (AM/PM)', value: '12h' },
   ];
 
   const handleUnitChange = (key: string, value: string) => {
@@ -172,28 +167,6 @@ export default function PreferencesScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Time & Format Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Time & Format</Text>
-
-          {/* Time Format */}
-          <TouchableOpacity
-            style={styles.preferenceItem}
-            onPress={() => setOpenModal('timeFormat')}
-          >
-            <View style={styles.preferenceLeft}>
-              <MaterialCommunityIcons name="clock-outline" size={20} color={theme.colors.lavender} />
-              <View style={styles.preferenceInfo}>
-                <Text style={styles.preferenceName}>Time Format</Text>
-                <Text style={styles.preferenceValue}>
-                  {userPreferences.timeFormat === '12h' ? '12-hour (AM/PM)' : '24-hour'}
-                </Text>
-              </View>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
         {/* App Preferences */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>App</Text>
@@ -243,17 +216,6 @@ export default function PreferencesScreen() {
         options={temperatureUnits}
         currentValue={userPreferences.temperatureUnit}
         onSelect={(value: string) => handleUnitChange('temperatureUnit', value)}
-        onClose={() => setOpenModal(null)}
-        insetTop={insets.top}
-        insetBottom={insets.bottom}
-      />
-
-      <UnitModal
-        visible={openModal === 'timeFormat'}
-        title="Time Format"
-        options={timeFormats}
-        currentValue={userPreferences.timeFormat}
-        onSelect={(value: string) => handleUnitChange('timeFormat', value)}
         onClose={() => setOpenModal(null)}
         insetTop={insets.top}
         insetBottom={insets.bottom}
